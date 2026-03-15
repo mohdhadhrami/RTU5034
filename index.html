@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RTU5034 — Gate Opener SMS Controller</title>
+  <title>RTU5034 — RADMA Gate Opener SMS Controller</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -64,8 +64,12 @@
 
     <!-- Title row -->
     <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">🚪</span>
+      <div class="flex items-center gap-3">
+        <!-- RADMA Logo -->
+        <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/radma_logo.png"
+             alt="RADMA Logo"
+             class="h-10 w-auto object-contain drop-shadow-lg"
+             onerror="this.style.display='none'" />
         <div>
           <h1 class="text-white font-extrabold text-lg leading-tight">RTU5034 Controller</h1>
           <p class="text-blue-200 text-xs">SMS Gate Opener</p>
@@ -104,7 +108,24 @@
 <!-- ══════════════════════════════════════════
      MAIN CONTENT
 ══════════════════════════════════════════ -->
-<main class="max-w-2xl mx-auto px-4 py-5 space-y-3 pb-16">
+<main class="max-w-2xl mx-auto px-4 py-5 space-y-3 pb-4">
+
+  <!-- ── Device Info Card ── -->
+  <div class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center gap-4 px-4 py-3">
+    <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/RTU5034.jpg"
+         alt="RTU5034 Device"
+         class="h-20 w-20 object-contain rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shrink-0"
+         onerror="this.style.display='none'" />
+    <div class="text-right flex-1">
+      <p class="font-extrabold text-base text-gray-800 dark:text-gray-100">RTU5034 GSM Gate Opener</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">جهاز التحكم بالبوابة عبر الرسائل النصية</p>
+      <div class="flex flex-wrap gap-1.5 mt-2">
+        <span class="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-semibold px-2 py-0.5 rounded-full">GSM</span>
+        <span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded-full">SMS Control</span>
+        <span class="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full">200 Users</span>
+      </div>
+    </div>
+  </div>
 
   <!-- ── SECTION 1: Direct Control ── -->
   <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
@@ -410,6 +431,75 @@
 </main>
 
 <!-- ══════════════════════════════════════════
+     FOOTER — RADMA Company Info
+══════════════════════════════════════════ -->
+<footer class="max-w-2xl mx-auto px-4 pb-8 pt-2">
+  <div class="rounded-2xl bg-gradient-to-l from-blue-700 to-indigo-700 dark:from-blue-900 dark:to-indigo-900 shadow-lg px-5 py-4">
+
+    <!-- Logo + brand row -->
+    <div class="flex items-center gap-3 mb-4">
+      <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/radma_logo.png"
+           alt="RADMA Logo"
+           class="h-9 w-auto object-contain drop-shadow"
+           onerror="this.style.display='none'" />
+      <div>
+        <p class="text-white font-extrabold text-sm leading-tight">RADMA</p>
+        <p class="text-blue-200 text-xs">للحلول التقنية والأمنية</p>
+      </div>
+    </div>
+
+    <!-- Contact links -->
+    <div class="grid grid-cols-1 gap-2">
+
+      <!-- Website -->
+      <a href="https://radma.co" target="_blank" rel="noopener noreferrer"
+         class="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:bg-white/30
+                transition rounded-xl px-4 py-2.5 group">
+        <span class="text-lg shrink-0">🌐</span>
+        <div class="text-right flex-1">
+          <p class="text-white/60 text-xs">الموقع الرسمي</p>
+          <p class="text-white font-semibold text-sm group-hover:underline" dir="ltr">radma.co</p>
+        </div>
+        <svg class="w-4 h-4 text-white/40 group-hover:text-white transition rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+
+      <!-- Instagram -->
+      <a href="https://instagram.com/radma_om" target="_blank" rel="noopener noreferrer"
+         class="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:bg-white/30
+                transition rounded-xl px-4 py-2.5 group">
+        <span class="text-lg shrink-0">📸</span>
+        <div class="text-right flex-1">
+          <p class="text-white/60 text-xs">انستجرام</p>
+          <p class="text-white font-semibold text-sm group-hover:underline" dir="ltr">@radma_om</p>
+        </div>
+        <svg class="w-4 h-4 text-white/40 group-hover:text-white transition rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+
+      <!-- Phone / WhatsApp -->
+      <a href="tel:+96890660001"
+         class="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:bg-white/30
+                transition rounded-xl px-4 py-2.5 group">
+        <span class="text-lg shrink-0">📞</span>
+        <div class="text-right flex-1">
+          <p class="text-white/60 text-xs">رقم التواصل</p>
+          <p class="text-white font-semibold text-sm" dir="ltr">90660001</p>
+        </div>
+        <svg class="w-4 h-4 text-white/40 group-hover:text-white transition rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+
+    </div>
+
+    <p class="text-center text-white/30 text-xs mt-4">© 2025 RADMA — جميع الحقوق محفوظة</p>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════
      PREVIEW MODAL / TOAST
 ══════════════════════════════════════════ -->
 
@@ -429,7 +519,12 @@
   <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4"
        onclick="event.stopPropagation()">
 
-    <h3 class="font-bold text-lg text-center">الكود الناتج</h3>
+    <div class="flex flex-col items-center gap-1">
+      <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/radma_logo.png"
+           alt="RADMA" class="h-7 w-auto object-contain opacity-80 dark:opacity-60"
+           onerror="this.style.display='none'" />
+      <h3 class="font-bold text-lg text-center">الكود الناتج</h3>
+    </div>
 
     <!-- Code display -->
     <div class="bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3 text-center">
