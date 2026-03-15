@@ -127,6 +127,132 @@
     </div>
   </div>
 
+  <!-- ── Important Rules Banner ── -->
+  <details class="rounded-2xl overflow-hidden shadow-md border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 group">
+    <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none list-none
+                    hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">⚠️</span>
+        <p class="font-bold text-amber-800 dark:text-amber-300 text-sm">قواعد مهمة قبل الاستخدام</p>
+      </div>
+      <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform duration-300 group-open:rotate-180"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </summary>
+    <ul class="px-4 pb-4 pt-1 space-y-2 text-xs text-amber-900 dark:text-amber-200">
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">①</span><span>كلمة المرور الافتراضية للجهاز هي <strong>1234</strong>.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">②</span><span>جميع الحروف في الأكواد يجب أن تكون <strong>CAPITAL LETTERS</strong> — التطبيق يحولها تلقائياً.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">③</span><span>لا يُسمح بأي <strong>مسافات أو رموز إضافية</strong> داخل الرسالة.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">④</span><span>الرمز <code class="code-preview bg-amber-200 dark:bg-amber-800 px-1 rounded">pwd</code> في الأكواد يعني كلمة المرور المدخلة أعلاه.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">⑤</span><span>إذا لم يرد الجهاز، تأكد من إضافة <strong>كود الدولة</strong> قبل رقم الهاتف (مثل <code class="code-preview bg-amber-200 dark:bg-amber-800 px-1 rounded">+968</code> أو <code class="code-preview bg-amber-200 dark:bg-amber-800 px-1 rounded">00968</code>).</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">⑥</span><span>لن يرسل الجهاز <strong>أي رد</strong> إذا كان هناك خطأ في كتابة أمر البرمجة.</span></li>
+    </ul>
+  </details>
+
+  <!-- ── SECTION 0: Initial Setup ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🛠️</span>
+        <div class="text-right">
+          <p class="font-bold text-base">الإعداد المبدئي</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">ضبط الوقت وتغيير كلمة المرور — ابدأ من هنا</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body">
+      <div class="px-4 pb-5 pt-1 space-y-4">
+
+        <!-- Set time via SIM -->
+        <div class="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 space-y-3">
+          <h3 class="font-bold text-blue-700 dark:text-blue-400 text-sm flex items-center gap-2">
+            📡 ضبط الوقت تلقائياً (عبر رقم الشريحة)
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdTEL[رقم الشريحة]</code>
+            — يأمر الجهاز بمزامنة وقته عبر الرقم المدخل.
+          </p>
+          <div>
+            <label class="field-label">رقم هاتف شريحة الجهاز</label>
+            <input id="tel-sim" type="tel" placeholder="+9687XXXXXXX"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action"
+            onclick="execCmd(() => {
+              const sim = id('tel-sim').value.trim();
+              if (!sim) return warn('الرجاء إدخال رقم الشريحة'), null;
+              return \`#\${pwd()}TEL\${sim}\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+        <!-- Set time manually -->
+        <div class="p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700/50 space-y-3">
+          <h3 class="font-bold text-violet-700 dark:text-violet-400 text-sm flex items-center gap-2">
+            🕐 ضبط الوقت يدوياً
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-violet-600 dark:text-violet-400">#pwdT[YY][MM][DD][HH][MM]</code>
+            — مثال: <code class="code-preview">#1234T1601131300</code> = 13 يناير 2016 الساعة 13:00.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">التاريخ</label>
+              <input id="mt-date" type="date" class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">الوقت</label>
+              <input id="mt-time" type="time" class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action bg-violet-600 hover:bg-violet-700 active:bg-violet-800"
+            onclick="execCmd(() => {
+              const d = id('mt-date').value;
+              const t = id('mt-time').value;
+              if (!d) return warn('الرجاء اختيار التاريخ'), null;
+              if (!t) return warn('الرجاء اختيار الوقت'), null;
+              const [yr, mo, dy] = d.split('-');
+              const [hh, mm]     = t.split(':');
+              return \`#\${pwd()}T\${yr.slice(2)}\${mo}\${dy}\${hh}\${mm}\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+        <!-- Change Password (duplicate here for visibility) -->
+        <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 space-y-3">
+          <h3 class="font-bold text-amber-700 dark:text-amber-400 text-sm flex items-center gap-2">
+            🔏 تغيير كلمة المرور
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-amber-600 dark:text-amber-400">pwdP[كلمة المرور الجديدة]</code>
+            — مثال: <code class="code-preview">1234P6666</code>
+          </p>
+          <div>
+            <label class="field-label">كلمة المرور الجديدة (4–8 أرقام)</label>
+            <input id="init-new-pwd" type="text" maxlength="8" placeholder="6666"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-amber-500 hover:bg-amber-600 active:bg-amber-700"
+            onclick="execCmd(() => {
+              const np = id('init-new-pwd').value.trim();
+              if (!/^\d{4,8}$/.test(np)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام'), null;
+              return \`\${pwd()}P\${np}\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- ── SECTION 1: Direct Control ── -->
   <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
     <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
@@ -199,12 +325,14 @@
                   data-tab="deleteUser">🗑️ حذف</button>
           <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
                   data-tab="queryUser">🔍 استعلام</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="queryRange">📋 متعدد</button>
         </div>
 
         <!-- Tab: Add Permanent User -->
         <div id="tab-addPerm" class="sub-panel space-y-3">
           <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]#</code>
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]</code>
           </p>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -224,7 +352,7 @@
               const phone = id('ap-phone').value.trim();
               if (!validSeq(seq)) return null;
               if (!phone) return warn('الرجاء إدخال رقم الهاتف'), null;
-              return \`#\${pwd()}A\${seq}#\${phone}#\`;
+              return \`#\${pwd()}A\${seq}#\${phone}\`;
             })">
             📨 توليد وإرسال
           </button>
@@ -233,7 +361,7 @@
         <!-- Tab: Add Timed User -->
         <div id="tab-addTimed" class="sub-panel hidden space-y-3">
           <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]#[start]#[end]#</code>
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]#[start]#[end]</code>
             <br/>صيغة الوقت: <code class="code-preview">YYMMDDHHMM</code> (مثال: <code class="code-preview">2601011430</code>)
           </p>
           <div class="grid grid-cols-2 gap-3">
@@ -270,7 +398,7 @@
               if (!phone)  return warn('الرجاء إدخال رقم الهاتف'), null;
               if (!/^\d{10}$/.test(start)) return warn('صيغة وقت البدء غير صحيحة (10 أرقام)'), null;
               if (!/^\d{10}$/.test(end))   return warn('صيغة وقت الانتهاء غير صحيحة (10 أرقام)'), null;
-              return \`#\${pwd()}A\${seq}#\${phone}#\${start}#\${end}#\`;
+              return \`#\${pwd()}A\${seq}#\${phone}#\${start}#\${end}\`;
             })">
             📨 توليد وإرسال
           </button>
@@ -316,6 +444,37 @@
           </button>
         </div>
 
+        <!-- Tab: Query Range -->
+        <div id="tab-queryRange" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdAL[start]#[end]</code>
+            — استعلام عن مجموعة مستخدمين دفعةً واحدة.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">من التسلسل (001–200)</label>
+              <input id="qr-from" type="number" min="1" max="200" placeholder="001"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">إلى التسلسل (001–200)</label>
+              <input id="qr-to" type="number" min="1" max="200" placeholder="010"
+                class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action bg-sky-500 hover:bg-sky-600 active:bg-sky-700"
+            onclick="execCmd(() => {
+              const from = padSeq(id('qr-from').value);
+              const to   = padSeq(id('qr-to').value);
+              if (!validSeq(from)) return null;
+              if (!validSeq(to))   return null;
+              if (parseInt(from) > parseInt(to)) return warn('رقم البداية يجب أن يكون أصغر من رقم النهاية'), null;
+              return \`#\${pwd()}AL\${from}#\${to}\`;
+            })">
+            📨 توليد وإرسال (استعلام متعدد)
+          </button>
+        </div>
+
       </div>
     </div>
   </section>
@@ -328,7 +487,7 @@
         <span class="text-2xl">⚙️</span>
         <div class="text-right">
           <p class="font-bold text-base">إعدادات النظام</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">كلمة المرور، وضع التحكم، مدة الريلاي، والحالة</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">وضع التحكم، مدة الريلاي، IMEI، رسائل التأكيد، والتقارير</p>
         </div>
       </div>
       <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -421,6 +580,74 @@
           <button onclick="execCmd(() => `${pwd()}EE`)"
             class="btn-action bg-sky-500 hover:bg-sky-600 active:bg-sky-700">
             📨 توليد وإرسال (Status)
+          </button>
+        </div>
+
+        <!-- IMEI & System Version -->
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700/50 space-y-3">
+          <h3 class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
+            🔢 الاستعلام عن IMEI وإصدار النظام
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-slate-600 dark:text-slate-400">#pwdIMEI</code>
+          </p>
+          <button onclick="execCmd(() => `#${pwd()}IMEI`)"
+            class="btn-action bg-slate-500 hover:bg-slate-600 active:bg-slate-700">
+            📨 توليد وإرسال (IMEI)
+          </button>
+        </div>
+
+        <!-- Disable Confirmation Messages -->
+        <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/50 space-y-3">
+          <h3 class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 text-sm">
+            🔕 إيقاف رسائل التأكيد
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            يوقف الرسائل التلقائية التي يرسلها الجهاز عند الفتح أو الإغلاق.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="execCmd(() => `##${pwd()}G`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-rose-500 hover:bg-rose-600 active:bg-rose-700
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">🔓🔕</span>
+              <span class="text-center leading-tight">إيقاف تأكيد<br/>الفتح</span>
+              <span class="code-preview bg-rose-700/50 px-2 py-0.5 rounded-full opacity-80 text-xs">##pwdG</span>
+            </button>
+            <button onclick="execCmd(() => `##${pwd()}GOFF`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-rose-700 hover:bg-rose-800 active:bg-rose-900
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">🔒🔕</span>
+              <span class="text-center leading-tight">إيقاف تأكيد<br/>الإغلاق</span>
+              <span class="code-preview bg-rose-900/50 px-2 py-0.5 rounded-full opacity-80 text-xs">##pwdGOFF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Auto-Check Report -->
+        <div class="p-4 rounded-xl bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-700/50 space-y-3">
+          <h3 class="font-bold text-lime-700 dark:text-lime-400 flex items-center gap-2 text-sm">
+            📡 تقرير الفحص التلقائي
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-lime-600 dark:text-lime-400">#pwdT#[000–999]</code>
+            — عدد الساعات بين كل تقرير. <strong>000</strong> = إلغاء التقرير التلقائي.
+          </p>
+          <div>
+            <label class="field-label">عدد الساعات (000 = إلغاء، 001–999 = تفعيل)</label>
+            <input id="auto-hours" type="number" min="0" max="999" placeholder="024"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-lime-600 hover:bg-lime-700 active:bg-lime-800"
+            onclick="execCmd(() => {
+              const raw  = id('auto-hours').value;
+              const hrs  = String(parseInt(raw) || 0).padStart(3, '0');
+              if (!/^\d{3}$/.test(hrs) || parseInt(hrs) > 999)
+                return warn('القيمة يجب أن تكون بين 000 و 999'), null;
+              return \`#\${pwd()}T#\${hrs}\`;
+            })">
+            📨 توليد وإرسال
           </button>
         </div>
 
