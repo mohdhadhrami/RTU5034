@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RTU5034 — Gate Opener SMS Controller</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Segoe UI', 'Tahoma', 'Arial', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Accordion animation */
+    .acc-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .acc-body.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+    .acc-body > div { overflow: hidden; }
+
+    /* Chevron rotation */
+    .acc-chevron { transition: transform 0.3s ease; }
+    .acc-chevron.open { transform: rotate(180deg); }
+
+    /* Code preview badge */
+    .code-preview {
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* Pulse animation for send button */
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    }
+    .btn-send:active { animation: pulse-green 0.4s ease; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+  </style>
+</head>
+
+<body class="bg-slate-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300 font-sans">
+
+<!-- ══════════════════════════════════════════
+     STICKY HEADER
+══════════════════════════════════════════ -->
+<header class="sticky top-0 z-50 bg-gradient-to-l from-blue-700 to-indigo-700 dark:from-blue-900 dark:to-indigo-900 shadow-xl">
+  <div class="max-w-2xl mx-auto px-4 pt-3 pb-4">
+
+    <!-- Title row -->
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🚪</span>
+        <div>
+          <h1 class="text-white font-extrabold text-lg leading-tight">RTU5034 Controller</h1>
+          <p class="text-blue-200 text-xs">SMS Gate Opener</p>
+        </div>
+      </div>
+      <button id="darkToggle"
+        class="p-2 rounded-full bg-white/20 hover:bg-white/30 active:bg-white/40 transition text-white text-lg"
+        title="تبديل الوضع الليلي">
+        🌙
+      </button>
+    </div>
+
+    <!-- Connection fields -->
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-blue-200 text-xs font-semibold mb-1 block">📱 رقم شريحة الجهاز</label>
+        <input id="deviceNumber" type="tel" dir="ltr"
+          placeholder="+9665XXXXXXXX"
+          class="w-full px-3 py-2 rounded-lg bg-white/15 placeholder-white/40 text-white
+                 border border-white/30 focus:border-white focus:bg-white/25
+                 outline-none transition text-sm" />
+      </div>
+      <div>
+        <label class="text-blue-200 text-xs font-semibold mb-1 block">🔑 كلمة المرور</label>
+        <input id="password" type="text" dir="ltr"
+          value="1234" maxlength="8"
+          class="w-full px-3 py-2 rounded-lg bg-white/15 placeholder-white/40 text-white
+                 border border-white/30 focus:border-white focus:bg-white/25
+                 outline-none transition text-sm tracking-widest" />
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════ -->
+<main class="max-w-2xl mx-auto px-4 py-5 space-y-3 pb-16">
+
+  <!-- ── SECTION 1: Direct Control ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⚡</span>
+        <div class="text-right">
+          <p class="font-bold text-base">التحكم المباشر</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">فتح وإغلاق الباب فوراً</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400 open" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body open">
+      <div class="px-4 pb-5 pt-1">
+        <div class="grid grid-cols-2 gap-3">
+
+          <!-- Open Gate -->
+          <button onclick="execCmd(() => `${pwd()}CC`)"
+            class="btn-send flex flex-col items-center gap-2 py-5 rounded-xl font-bold
+                   bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700
+                   text-white shadow-md active:scale-95 transition-all duration-150">
+            <span class="text-4xl">🔓</span>
+            <span class="text-base">فتح الباب</span>
+            <span class="code-preview bg-emerald-700/50 px-2 py-0.5 rounded-full opacity-80">pwdCC</span>
+          </button>
+
+          <!-- Close Gate -->
+          <button onclick="execCmd(() => `${pwd()}DD`)"
+            class="btn-send flex flex-col items-center gap-2 py-5 rounded-xl font-bold
+                   bg-red-500 hover:bg-red-600 active:bg-red-700
+                   text-white shadow-md active:scale-95 transition-all duration-150">
+            <span class="text-4xl">🔒</span>
+            <span class="text-base">إغلاق الباب</span>
+            <span class="code-preview bg-red-700/50 px-2 py-0.5 rounded-full opacity-80">pwdDD</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: User Management ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">👥</span>
+        <div class="text-right">
+          <p class="font-bold text-base">إدارة المستخدمين</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">إضافة وحذف والاستعلام عن الأرقام المصرحة</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body">
+      <div class="px-4 pb-5 pt-1 space-y-4">
+
+        <!-- Sub-tabs -->
+        <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl overflow-x-auto">
+          <button class="sub-tab active flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="addPerm">➕ إضافة دائم</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="addTimed">⏰ إضافة مؤقت</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="deleteUser">🗑️ حذف</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="queryUser">🔍 استعلام</button>
+        </div>
+
+        <!-- Tab: Add Permanent User -->
+        <div id="tab-addPerm" class="sub-panel space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]#</code>
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">رقم التسلسل (001–200)</label>
+              <input id="ap-seq" type="number" min="1" max="200" placeholder="001"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">رقم هاتف المستخدم</label>
+              <input id="ap-phone" type="tel" placeholder="+9665XXXXXXXX"
+                class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action"
+            onclick="execCmd(() => {
+              const seq = padSeq(id('ap-seq').value);
+              const phone = id('ap-phone').value.trim();
+              if (!validSeq(seq)) return null;
+              if (!phone) return warn('الرجاء إدخال رقم الهاتف'), null;
+              return \`#\${pwd()}A\${seq}#\${phone}#\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+        <!-- Tab: Add Timed User -->
+        <div id="tab-addTimed" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]#[start]#[end]#</code>
+            <br/>صيغة الوقت: <code class="code-preview">YYMMDDHHMM</code> (مثال: <code class="code-preview">2601011430</code>)
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">رقم التسلسل (001–200)</label>
+              <input id="at-seq" type="number" min="1" max="200" placeholder="001"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">رقم هاتف المستخدم</label>
+              <input id="at-phone" type="tel" placeholder="+9665XXXXXXXX"
+                class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">وقت البدء (YYMMDDHHMM)</label>
+              <input id="at-start" type="text" maxlength="10" placeholder="2601011400"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">وقت الانتهاء (YYMMDDHHMM)</label>
+              <input id="at-end" type="text" maxlength="10" placeholder="2601311800"
+                class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action"
+            onclick="execCmd(() => {
+              const seq   = padSeq(id('at-seq').value);
+              const phone = id('at-phone').value.trim();
+              const start = id('at-start').value.trim();
+              const end   = id('at-end').value.trim();
+              if (!validSeq(seq)) return null;
+              if (!phone)  return warn('الرجاء إدخال رقم الهاتف'), null;
+              if (!/^\d{10}$/.test(start)) return warn('صيغة وقت البدء غير صحيحة (10 أرقام)'), null;
+              if (!/^\d{10}$/.test(end))   return warn('صيغة وقت الانتهاء غير صحيحة (10 أرقام)'), null;
+              return \`#\${pwd()}A\${seq}#\${phone}#\${start}#\${end}#\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+        <!-- Tab: Delete User -->
+        <div id="tab-deleteUser" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">##pwdA[seq]</code>
+          </p>
+          <div>
+            <label class="field-label">رقم التسلسل (001–200)</label>
+            <input id="del-seq" type="number" min="1" max="200" placeholder="001"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-red-500 hover:bg-red-600 active:bg-red-700"
+            onclick="execCmd(() => {
+              const seq = padSeq(id('del-seq').value);
+              if (!validSeq(seq)) return null;
+              return \`##\${pwd()}A\${seq}\`;
+            })">
+            📨 توليد وإرسال (حذف)
+          </button>
+        </div>
+
+        <!-- Tab: Query User -->
+        <div id="tab-queryUser" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]</code>
+          </p>
+          <div>
+            <label class="field-label">رقم التسلسل (001–200)</label>
+            <input id="qry-seq" type="number" min="1" max="200" placeholder="001"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-sky-500 hover:bg-sky-600 active:bg-sky-700"
+            onclick="execCmd(() => {
+              const seq = padSeq(id('qry-seq').value);
+              if (!validSeq(seq)) return null;
+              return \`#\${pwd()}A\${seq}\`;
+            })">
+            📨 توليد وإرسال (استعلام)
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 3: System Settings ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⚙️</span>
+        <div class="text-right">
+          <p class="font-bold text-base">إعدادات النظام</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">كلمة المرور، وضع التحكم، مدة الريلاي، والحالة</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body">
+      <div class="px-4 pb-5 pt-1 space-y-5">
+
+        <!-- Change Password -->
+        <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 space-y-3">
+          <h3 class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-2 text-sm">
+            🔏 تغيير كلمة المرور
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-amber-600 dark:text-amber-400">pwdP[newpwd]</code>
+          </p>
+          <div>
+            <label class="field-label">كلمة المرور الجديدة (4–8 أرقام)</label>
+            <input id="new-pwd" type="text" maxlength="8" placeholder="4321"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-amber-500 hover:bg-amber-600 active:bg-amber-700"
+            onclick="execCmd(() => {
+              const np = id('new-pwd').value.trim();
+              if (!/^\d{4,8}$/.test(np)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام'), null;
+              return \`\${pwd()}P\${np}\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+        <!-- Control Mode -->
+        <div class="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/50 space-y-3">
+          <h3 class="font-bold text-purple-700 dark:text-purple-400 flex items-center gap-2 text-sm">
+            🛡️ وضع التحكم (من يمكنه الفتح)
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="execCmd(() => `#${pwd()}ALL`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-purple-500 hover:bg-purple-600 active:bg-purple-700
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">🌐</span>
+              <span>أي رقم</span>
+              <span class="code-preview bg-purple-700/50 px-2 py-0.5 rounded-full opacity-80 text-xs">#pwdALL</span>
+            </button>
+            <button onclick="execCmd(() => `#${pwd()}AUT`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">✅</span>
+              <span>المصرح لهم فقط</span>
+              <span class="code-preview bg-indigo-700/50 px-2 py-0.5 rounded-full opacity-80 text-xs">#pwdAUT</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Relay Duration -->
+        <div class="p-4 rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700/50 space-y-3">
+          <h3 class="font-bold text-teal-700 dark:text-teal-400 flex items-center gap-2 text-sm">
+            ⏱️ مدة فتح الباب (تفعيل الريلاي)
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-teal-600 dark:text-teal-400">#pwdGOT[000–999]</code>
+          </p>
+          <div>
+            <label class="field-label">المدة بالثواني (000–999)</label>
+            <input id="relay-dur" type="number" min="0" max="999" placeholder="005"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-teal-500 hover:bg-teal-600 active:bg-teal-700"
+            onclick="execCmd(() => {
+              const raw = id('relay-dur').value;
+              const dur = String(parseInt(raw) || 0).padStart(3, '0');
+              if (!validDur(dur)) return null;
+              return \`#\${pwd()}GOT\${dur}\`;
+            })">
+            📨 توليد وإرسال
+          </button>
+        </div>
+
+        <!-- Status Query -->
+        <div class="p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/50 space-y-3">
+          <h3 class="font-bold text-sky-700 dark:text-sky-400 flex items-center gap-2 text-sm">
+            📊 الاستعلام عن حالة الجهاز
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-sky-600 dark:text-sky-400">pwdEE</code>
+          </p>
+          <button onclick="execCmd(() => `${pwd()}EE`)"
+            class="btn-action bg-sky-500 hover:bg-sky-600 active:bg-sky-700">
+            📨 توليد وإرسال (Status)
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════
+     PREVIEW MODAL / TOAST
+══════════════════════════════════════════ -->
+
+<!-- Toast notification -->
+<div id="toast"
+  class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden
+         bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900
+         text-sm font-semibold px-5 py-3 rounded-full shadow-2xl
+         transition-all duration-300 opacity-0 translate-y-4 max-w-xs text-center">
+</div>
+
+<!-- Code Preview Modal -->
+<div id="modal"
+  class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-4"
+  onclick="closeModal()">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4"
+       onclick="event.stopPropagation()">
+
+    <h3 class="font-bold text-lg text-center">الكود الناتج</h3>
+
+    <!-- Code display -->
+    <div class="bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3 text-center">
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">سيتم إرسال هذا الكود إلى الجهاز:</p>
+      <code id="modal-code"
+        class="text-blue-600 dark:text-blue-400 font-mono font-bold text-lg break-all tracking-wider"></code>
+    </div>
+
+    <!-- To number display -->
+    <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+      إلى الرقم: <span id="modal-number" class="font-semibold text-gray-700 dark:text-gray-300 dir-ltr" dir="ltr"></span>
+    </div>
+
+    <!-- Actions -->
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="closeModal()"
+        class="py-3 rounded-xl font-semibold text-sm bg-gray-200 dark:bg-gray-600
+               hover:bg-gray-300 dark:hover:bg-gray-500 transition active:scale-95">
+        إلغاء
+      </button>
+      <button id="modal-confirm"
+        class="py-3 rounded-xl font-bold text-sm bg-green-500 hover:bg-green-600
+               active:bg-green-700 text-white transition active:scale-95">
+        ✅ إرسال الآن
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAILWIND COMPONENT CLASSES (via @apply equivalent)
+══════════════════════════════════════════ -->
+<style>
+  .field-label {
+    @apply text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1 block;
+  }
+  .field-input {
+    @apply w-full px-3 py-2.5 rounded-xl text-sm
+           bg-gray-100 dark:bg-gray-700
+           border border-gray-300 dark:border-gray-600
+           focus:border-blue-500 dark:focus:border-blue-400
+           focus:ring-2 focus:ring-blue-500/20
+           outline-none transition text-gray-900 dark:text-gray-100
+           placeholder-gray-400 dark:placeholder-gray-500;
+  }
+  .btn-action {
+    @apply btn-send w-full py-3 rounded-xl font-bold text-sm text-white
+           bg-blue-600 hover:bg-blue-700 active:bg-blue-800
+           shadow-md active:scale-[0.98] transition-all duration-150;
+  }
+  .sub-tab {
+    @apply text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-600
+           hover:text-gray-900 dark:hover:text-white transition;
+  }
+  .sub-tab.active {
+    @apply bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow;
+  }
+</style>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+  /* ── Utilities ────────────────────────── */
+  const id = (i) => document.getElementById(i);
+
+  function pwd() {
+    return (id('password').value || '1234').trim().toUpperCase();
+  }
+
+  function warn(msg) {
+    showToast('⚠️ ' + msg, 'warn');
+  }
+
+  function padSeq(val) {
+    const n = parseInt(val);
+    if (!val || isNaN(n)) return '';
+    return String(n).padStart(3, '0');
+  }
+
+  function validSeq(seq) {
+    const n = parseInt(seq);
+    if (!/^\d{3}$/.test(seq) || n < 1 || n > 200) {
+      warn('رقم التسلسل يجب أن يكون بين 001 و 200');
+      return false;
+    }
+    return true;
+  }
+
+  function validDur(dur) {
+    const n = parseInt(dur);
+    if (!/^\d{3}$/.test(dur) || n < 0 || n > 999) {
+      warn('المدة يجب أن تكون بين 000 و 999 (3 أرقام)');
+      return false;
+    }
+    return true;
+  }
+
+  /* ── Core SMS sender ──────────────────── */
+  function execCmd(codeBuilder) {
+    const deviceNum = id('deviceNumber').value.trim();
+    if (!deviceNum) {
+      warn('الرجاء إدخال رقم شريحة الجهاز أولاً');
+      return;
+    }
+    if (!pwd()) {
+      warn('الرجاء إدخال كلمة المرور');
+      return;
+    }
+
+    const rawCode = codeBuilder();
+    if (!rawCode) return;                       // builder returned null → already warned
+
+    const code = rawCode.toUpperCase().replace(/\s+/g, '');  // uppercase, no spaces
+    showModal(code, deviceNum);
+  }
+
+  function sendViaSMS(code, deviceNum) {
+    const url = `sms:${deviceNum}?body=${encodeURIComponent(code)}`;
+    window.location.href = url;
+  }
+
+  /* ── Modal ───────────────────────────── */
+  function showModal(code, deviceNum) {
+    id('modal-code').textContent = code;
+    id('modal-number').textContent = deviceNum;
+    id('modal-confirm').onclick = () => {
+      closeModal();
+      sendViaSMS(code, deviceNum);
+      showToast('✅ تم فتح تطبيق الرسائل');
+    };
+    id('modal').classList.remove('hidden');
+    id('modal').classList.add('flex');
+  }
+
+  function closeModal() {
+    id('modal').classList.add('hidden');
+    id('modal').classList.remove('flex');
+  }
+
+  /* ── Toast ───────────────────────────── */
+  let toastTimer;
+  function showToast(msg, type = 'success') {
+    const t = id('toast');
+    t.textContent = msg;
+    t.classList.remove('hidden', 'opacity-0', 'translate-y-4');
+    if (type === 'warn') {
+      t.classList.add('!bg-amber-500');
+    } else {
+      t.classList.remove('!bg-amber-500');
+    }
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      t.classList.add('opacity-0', 'translate-y-4');
+      setTimeout(() => t.classList.add('hidden'), 300);
+    }, 2800);
+  }
+
+  /* ── Dark Mode ───────────────────────── */
+  const html = document.documentElement;
+  const darkBtn = id('darkToggle');
+
+  function applyDark(dark) {
+    if (dark) {
+      html.classList.add('dark');
+      darkBtn.textContent = '☀️';
+    } else {
+      html.classList.remove('dark');
+      darkBtn.textContent = '🌙';
+    }
+  }
+
+  // Initialise from system preference
+  applyDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => applyDark(e.matches));
+
+  darkBtn.addEventListener('click', () => applyDark(!html.classList.contains('dark')));
+
+  /* ── Accordion ───────────────────────── */
+  document.querySelectorAll('.acc-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body    = btn.nextElementSibling;
+      const chevron = btn.querySelector('.acc-chevron');
+      body.classList.toggle('open');
+      chevron.classList.toggle('open');
+    });
+  });
+
+  /* ── Sub-tabs (User Management) ─────── */
+  document.querySelectorAll('.sub-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      // deactivate all
+      document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+      // activate clicked
+      tab.classList.add('active');
+      id('tab-' + tab.dataset.tab).classList.remove('hidden');
+    });
+  });
+
+  /* ── Save settings to localStorage ──── */
+  const FIELDS = ['deviceNumber', 'password'];
+  FIELDS.forEach(f => {
+    const el = id(f);
+    const saved = localStorage.getItem('rtu5034_' + f);
+    if (saved) el.value = saved;
+    el.addEventListener('input', () => localStorage.setItem('rtu5034_' + f, el.value));
+  });
+</script>
+
+</body>
+</html>
