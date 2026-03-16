@@ -1,0 +1,28 @@
+{
+  "name": "RTU5034 — RADMA Gate Opener",
+  "short_name": "RTU5034",
+  "description": "تطبيق التحكم بفاتح البوابة الذكي عبر الرسائل النصية",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "Image/radma_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "فتح الباب",
+      "short_name": "فتح",
+      "url": "./index.html?action=open",
+      "icons": [{ "src": "Image/radma_logo.png", "sizes": "512x512" }]
+    }
+  ]
+}
