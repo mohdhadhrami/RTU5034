@@ -1,935 +1,977 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>RTU5034 — RADMA Gate Opener</title>
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="Image/radma_logo.png" />
-
+  <title>RTU5034 — RADMA Gate Opener SMS Controller</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: { sans: ['Segoe UI', 'Tahoma', 'Arial', 'sans-serif'] },
-          colors: {
-            dark: { bg: '#0f172a', card: '#1e293b', border: '#334155', input: '#0f172a' }
-          }
+          fontFamily: { sans: ['Segoe UI', 'Tahoma', 'Arial', 'sans-serif'] }
         }
       }
     };
   </script>
   <style>
-    * { -webkit-tap-highlight-color: transparent; }
-    body { background: #0f172a; color: #f1f5f9; }
+    /* Accordion animation */
+    .acc-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .acc-body.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+    }
+    .acc-body > div { overflow: hidden; }
 
-    /* Card */
-    .g-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-right: 3px solid #3b82f6;
-      border-radius: 1rem;
-      padding: 1rem;
-    }
-
-    /* Input */
-    .g-input {
-      width: 100%;
-      padding: 0.875rem 1rem;
-      border-radius: 0.75rem;
-      background: #0f172a;
-      border: 1.5px solid #334155;
-      color: #f1f5f9;
-      font-size: 1rem;
-      font-weight: 600;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .g-input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
-    }
-    .g-input::placeholder { color: #475569; }
-
-    /* Label */
-    .g-label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #94a3b8;
-      margin-bottom: 0.375rem;
-    }
-
-    /* Phone hint */
-    .g-phone-hint {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.375rem;
-      font-size: 0.7rem;
-      color: #f59e0b;
-      margin-top: 0.375rem;
-      font-weight: 500;
-    }
-
-    /* Action button */
-    .g-btn {
-      width: 100%;
-      padding: 0.9rem;
-      border-radius: 0.75rem;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      letter-spacing: 0.02em;
-    }
-    .g-btn:active { transform: scale(0.97); opacity: 0.85; }
-    .g-btn-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-    .g-btn-green { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .g-btn-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
-    .g-btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .g-btn-violet { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-    .g-btn-teal { background: linear-gradient(135deg, #14b8a6, #0d9488); }
-    .g-btn-sky { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
-    .g-btn-slate { background: linear-gradient(135deg, #64748b, #475569); }
-    .g-btn-rose { background: linear-gradient(135deg, #f43f5e, #e11d48); }
-    .g-btn-lime { background: linear-gradient(135deg, #84cc16, #65a30d); }
-    .g-btn-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
-    .g-btn-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
-
-    /* Section heading inside card */
-    .g-section-title {
-      font-weight: 700;
-      font-size: 0.875rem;
-      color: #e2e8f0;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
+    /* Chevron rotation */
+    .acc-chevron { transition: transform 0.3s ease; }
+    .acc-chevron.open { transform: rotate(180deg); }
 
     /* Code preview badge */
-    .g-code {
+    .code-preview {
       font-family: 'Courier New', monospace;
       font-size: 0.7rem;
       letter-spacing: 0.05em;
-      background: rgba(59,130,246,0.15);
-      color: #60a5fa;
-      padding: 0.125rem 0.5rem;
-      border-radius: 0.375rem;
     }
 
-    /* Sub-tab bar */
-    .g-sub-tab {
-      flex: 1;
-      padding: 0.5rem 0.25rem;
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #94a3b8;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-      white-space: nowrap;
-      border: none;
-      background: transparent;
+    /* Pulse animation for send button */
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+      50%       { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
     }
-    .g-sub-tab.active {
-      background: #334155;
-      color: #f1f5f9;
-    }
-
-    /* Bottom tab bar */
-    .bottom-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #1e293b;
-      border-top: 1px solid #334155;
-      z-index: 100;
-      padding-bottom: env(safe-area-inset-bottom, 0);
-    }
-    .bottom-tab {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.625rem 0;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: #64748b;
-      cursor: pointer;
-      transition: color 0.2s;
-      border: none;
-      background: transparent;
-    }
-    .bottom-tab.active { color: #3b82f6; }
-    .bottom-tab svg { width: 1.5rem; height: 1.5rem; }
-
-    /* Status dot pulse */
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-    .status-dot { animation: pulse-dot 2s ease-in-out infinite; }
-
-    /* Toast */
-    .g-toast {
-      position: fixed;
-      bottom: 5rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(1rem);
-      z-index: 200;
-      background: #334155;
-      color: #f1f5f9;
-      font-size: 0.875rem;
-      font-weight: 600;
-      padding: 0.75rem 1.5rem;
-      border-radius: 999px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-      opacity: 0;
-      transition: all 0.3s;
-      pointer-events: none;
-      max-width: 90%;
-      text-align: center;
-    }
-    .g-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .g-toast.warn { background: #92400e; }
-
-    /* Modal overlay */
-    .g-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 150;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 1rem;
-    }
-    .g-overlay.open { display: flex; }
-    .g-modal {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 1.5rem;
-      width: 100%;
-      max-width: 24rem;
-      padding: 1.5rem;
-    }
+    .btn-send:active { animation: pulse-green 0.4s ease; }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
-
-    /* Tab content */
-    .tab-page { display: none; }
-    .tab-page.active { display: block; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
   </style>
 </head>
 
-<body class="min-h-screen font-sans pb-20">
+<body class="bg-slate-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300 font-sans">
 
 <!-- ══════════════════════════════════════════
-     HEADER
+     STICKY HEADER
 ══════════════════════════════════════════ -->
-<header class="sticky top-0 z-50" style="background:#0f172a; border-bottom:1px solid #334155;">
-  <div class="max-w-lg mx-auto px-4 py-3">
-    <div class="flex items-center justify-between">
-      <!-- Right: Logo + info -->
+<header class="sticky top-0 z-50 bg-gradient-to-l from-blue-700 to-indigo-700 dark:from-blue-900 dark:to-indigo-900 shadow-xl">
+  <div class="max-w-2xl mx-auto px-4 pt-3 pb-4">
+
+    <!-- Title row -->
+    <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-3">
-        <img src="Image/radma_logo.png" alt="RADMA"
-             class="h-10 w-auto object-contain" onerror="this.style.display='none'" />
+        <!-- RADMA Logo -->
+        <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/radma_logo.png"
+             alt="RADMA Logo"
+             class="h-10 w-auto object-contain drop-shadow-lg"
+             onerror="this.style.display='none'" />
         <div>
-          <p class="font-extrabold text-sm" style="color:#f1f5f9;">RADMA</p>
-          <p class="text-xs" style="color:#94a3b8;">البوابات الإلكترونية</p>
+          <h1 class="text-white font-extrabold text-lg leading-tight">RTU5034 Controller</h1>
+          <p class="text-blue-200 text-xs">SMS Gate Opener</p>
         </div>
       </div>
-      <!-- Left: phone + instagram -->
-      <div class="flex items-center gap-3 text-xs" style="color:#94a3b8;">
-        <span dir="ltr">90660001</span>
-        <span>radma_om</span>
-        <a href="https://instagram.com/radma_om" target="_blank" class="opacity-60 hover:opacity-100">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-        </a>
+      <button id="darkToggle"
+        class="p-2 rounded-full bg-white/20 hover:bg-white/30 active:bg-white/40 transition text-white text-lg"
+        title="تبديل الوضع الليلي">
+        🌙
+      </button>
+    </div>
+
+    <!-- Connection fields -->
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-blue-200 text-xs font-semibold mb-1 block">📱 رقم شريحة الجهاز</label>
+        <input id="deviceNumber" type="tel" dir="ltr"
+          placeholder="+9665XXXXXXXX"
+          class="w-full px-3 py-2 rounded-lg bg-white/15 placeholder-white/40 text-white
+                 border border-white/30 focus:border-white focus:bg-white/25
+                 outline-none transition text-sm" />
+      </div>
+      <div>
+        <label class="text-blue-200 text-xs font-semibold mb-1 block">🔑 كلمة المرور</label>
+        <input id="password" type="text" dir="ltr"
+          value="1234" maxlength="8"
+          class="w-full px-3 py-2 rounded-lg bg-white/15 placeholder-white/40 text-white
+                 border border-white/30 focus:border-white focus:bg-white/25
+                 outline-none transition text-sm tracking-widest" />
       </div>
     </div>
+
   </div>
 </header>
 
 <!-- ══════════════════════════════════════════
-     DEVICE INFO BAR
+     MAIN CONTENT
 ══════════════════════════════════════════ -->
-<div class="max-w-lg mx-auto px-4 mt-3">
-  <div class="g-card flex items-center justify-between">
-    <button onclick="showSetupWizard()" class="p-2 rounded-lg hover:bg-white/5 transition" title="الإعدادات">
-      <svg class="w-5 h-5" style="color:#94a3b8;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+<main class="max-w-2xl mx-auto px-4 py-5 space-y-3 pb-4">
+
+  <!-- ── Device Info Card ── -->
+  <div class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center gap-4 px-4 py-3">
+    <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/RTU5034.jpg"
+         alt="RTU5034 Device"
+         class="h-20 w-20 object-contain rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 shrink-0"
+         onerror="this.style.display='none'" />
+    <div class="text-right flex-1">
+      <p class="font-extrabold text-base text-gray-800 dark:text-gray-100">RTU5034 GSM Gate Opener</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">جهاز التحكم بالبوابة عبر الرسائل النصية</p>
+      <div class="flex flex-wrap gap-1.5 mt-2">
+        <span class="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-semibold px-2 py-0.5 rounded-full">GSM</span>
+        <span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-2 py-0.5 rounded-full">SMS Control</span>
+        <span class="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-0.5 rounded-full">200 Users</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Important Rules Banner ── -->
+  <details class="rounded-2xl overflow-hidden shadow-md border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 group">
+    <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none list-none
+                    hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">⚠️</span>
+        <p class="font-bold text-amber-800 dark:text-amber-300 text-sm">قواعد مهمة قبل الاستخدام</p>
+      </div>
+      <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform duration-300 group-open:rotate-180"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </summary>
+    <ul class="px-4 pb-4 pt-1 space-y-2 text-xs text-amber-900 dark:text-amber-200">
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">①</span><span>كلمة المرور الافتراضية للجهاز هي <strong>1234</strong>.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">②</span><span>جميع الحروف في الأكواد يجب أن تكون <strong>CAPITAL LETTERS</strong> — التطبيق يحولها تلقائياً.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">③</span><span>لا يُسمح بأي <strong>مسافات أو رموز إضافية</strong> داخل الرسالة.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">④</span><span>الرمز <code class="code-preview bg-amber-200 dark:bg-amber-800 px-1 rounded">pwd</code> في الأكواد يعني كلمة المرور المدخلة أعلاه.</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">⑤</span><span>إذا لم يرد الجهاز، تأكد من إضافة <strong>كود الدولة</strong> قبل رقم الهاتف (مثل <code class="code-preview bg-amber-200 dark:bg-amber-800 px-1 rounded">+968</code> أو <code class="code-preview bg-amber-200 dark:bg-amber-800 px-1 rounded">00968</code>).</span></li>
+      <li class="flex gap-2"><span class="shrink-0 font-bold text-amber-600">⑥</span><span>لن يرسل الجهاز <strong>أي رد</strong> إذا كان هناك خطأ في كتابة أمر البرمجة.</span></li>
+    </ul>
+  </details>
+
+  <!-- ── SECTION 0: Initial Setup ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🛠️</span>
+        <div class="text-right">
+          <p class="font-bold text-base">الإعداد المبدئي</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">ضبط الوقت وتغيير كلمة المرور — ابدأ من هنا</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
       </svg>
     </button>
-    <div class="text-right flex-1 mx-3">
-      <p id="device-display-name" class="font-extrabold text-base" style="color:#f1f5f9;">RTU5034 Gate</p>
-      <p class="text-xs" style="color:#94a3b8;">فاتح البوابة الذكي</p>
-    </div>
-    <div class="flex items-center gap-2">
-      <div class="text-right">
-        <p class="text-xs" style="color:#64748b;">رقم الجهاز</p>
-        <p id="device-display-number" class="font-bold text-sm" style="color:#f1f5f9;" dir="ltr">—</p>
-      </div>
-      <span class="status-dot inline-block w-2.5 h-2.5 rounded-full bg-green-500"></span>
-    </div>
-  </div>
-</div>
+    <div class="acc-body">
+      <div class="px-4 pb-5 pt-1 space-y-4">
 
-<!-- ══════════════════════════════════════════
-     MAIN CONTENT (TAB PAGES)
-══════════════════════════════════════════ -->
-<main class="max-w-lg mx-auto px-4 py-4 space-y-3">
-
-  <!-- ═══ TAB 1: Control (تحكم) ═══ -->
-  <div id="page-control" class="tab-page active space-y-3">
-
-    <!-- Direct Control -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#3b82f6;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-        </svg>
-        التحكم المباشر
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="execCmd(() => `${pwd()}CC`)"
-          class="g-btn g-btn-green flex flex-col items-center gap-2 py-5 rounded-xl">
-          <span class="text-3xl">🔓</span>
-          <span class="text-base font-bold">فتح الباب</span>
-          <span class="g-code">pwdCC</span>
-        </button>
-        <button onclick="execCmd(() => `${pwd()}DD`)"
-          class="g-btn g-btn-red flex flex-col items-center gap-2 py-5 rounded-xl">
-          <span class="text-3xl">🔒</span>
-          <span class="text-base font-bold">إغلاق الباب</span>
-          <span class="g-code">pwdDD</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Initial Setup: Activate Device -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#3b82f6;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-        </svg>
-        تفعيل رقم شريحة الجهاز
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">pwdTEL[رقم الشريحة]</span>
-        — مثال: <span class="g-code">1234TEL90660001</span>
-      </p>
-      <div>
-        <label class="g-label">رقم شريحة الجهاز</label>
-        <input id="tel-sim" type="tel" class="g-input" dir="ltr"
-          oninput="this._manuallyEdited = !!this.value; if(!this.value) this._manuallyEdited=false;" />
-        <p class="g-phone-hint">
-          <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          يُملأ تلقائياً من رقم الشريحة المسجّل
-        </p>
-      </div>
-      <button class="g-btn g-btn-blue"
-        onclick="execCmd(() => {
-          const sim = eid('tel-sim').value.trim();
-          if (!sim) return warn('الرجاء إدخال رقم الشريحة'), null;
-          return `${pwd()}TEL${sim}`;
-        })">
-        تفعيل رقم الجهاز عبر SMS
-      </button>
-    </div>
-
-    <!-- Set Time Manually -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#8b5cf6;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        ضبط الوقت يدوياً
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">#pwdT[YY][MM][DD][HH][MM]</span>
-      </p>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="g-label">التاريخ</label>
-          <input id="mt-date" type="date" class="g-input" dir="ltr" />
-        </div>
-        <div>
-          <label class="g-label">الوقت</label>
-          <input id="mt-time" type="time" class="g-input" dir="ltr" />
-        </div>
-      </div>
-      <button class="g-btn g-btn-violet"
-        onclick="execCmd(() => {
-          const d = eid('mt-date').value;
-          const t = eid('mt-time').value;
-          if (!d) return warn('الرجاء اختيار التاريخ'), null;
-          if (!t) return warn('الرجاء اختيار الوقت'), null;
-          const [yr, mo, dy] = d.split('-');
-          const [hh, mm]     = t.split(':');
-          return `#${pwd()}T${yr.slice(2)}${mo}${dy}${hh}${mm}`;
-        })">
-        ضبط الوقت يدوياً عبر SMS
-      </button>
-    </div>
-
-    <!-- Change Password -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#f59e0b;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        تغيير كلمة المرور
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">pwdP[كلمة المرور الجديدة]</span>
-      </p>
-      <div>
-        <label class="g-label">كلمة المرور الجديدة (4–8 أرقام)</label>
-        <input id="init-new-pwd" type="text" maxlength="8" placeholder="6666"
-          class="g-input" dir="ltr" />
-      </div>
-      <button class="g-btn g-btn-amber"
-        onclick="execCmd(() => {
-          const np = eid('init-new-pwd').value.trim();
-          if (!/^\d{4,8}$/.test(np)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام'), null;
-          return `${pwd()}P${np}`;
-        })">
-        تغيير كلمة المرور عبر SMS
-      </button>
-    </div>
-
-  </div>
-
-  <!-- ═══ TAB 2: Users (مستخدمون) ═══ -->
-  <div id="page-users" class="tab-page space-y-3">
-
-    <!-- Add Permanent User -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#3b82f6;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-        </svg>
-        إضافة مستخدم
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">#pwdA[seq]#[phone]</span>
-      </p>
-      <div>
-        <label class="g-label">رقم هاتف المستخدم</label>
-        <input id="ap-phone" type="tel" placeholder="0096895180855" class="g-input" dir="ltr" />
-        <p class="g-phone-hint">
-          <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-          يجب كتابة رقم فتح الخط للدولة كما في المثال الموضح (0096890660001)
-        </p>
-      </div>
-      <div>
-        <label class="g-label">رقم التسلسل (001 – 200)</label>
-        <input id="ap-seq" type="number" min="1" max="200" placeholder="002"
-          class="g-input" dir="ltr" />
-      </div>
-      <button class="g-btn g-btn-blue"
-        onclick="execCmd(() => {
-          const seq = padSeq(eid('ap-seq').value);
-          const phone = eid('ap-phone').value.trim();
-          if (!validSeq(seq)) return null;
-          if (!phone) return warn('الرجاء إدخال رقم الهاتف'), null;
-          return `#${pwd()}A${seq}#${phone}`;
-        })">
-        إضافة المستخدم عبر SMS
-      </button>
-    </div>
-
-    <!-- Delete User -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#ef4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"/>
-        </svg>
-        حذف مستخدم
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">##pwdA[seq]</span>
-      </p>
-      <div>
-        <label class="g-label">رقم التسلسل للحذف</label>
-        <input id="del-seq" type="number" min="1" max="200" placeholder="002"
-          class="g-input" dir="ltr" />
-      </div>
-      <button class="g-btn g-btn-red"
-        onclick="execCmd(() => {
-          const seq = padSeq(eid('del-seq').value);
-          if (!validSeq(seq)) return null;
-          return `##${pwd()}A${seq}`;
-        })">
-        حذف المستخدم عبر SMS
-      </button>
-    </div>
-
-    <!-- Add Timed User -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#f59e0b;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        إضافة مستخدم مؤقت
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">#pwdA[seq]#[phone]#[start]#[end]</span>
-        <br/>صيغة الوقت: <span class="g-code">YYMMDDHHMM</span>
-      </p>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="g-label">رقم التسلسل (001–200)</label>
-          <input id="at-seq" type="number" min="1" max="200" placeholder="001"
-            class="g-input" dir="ltr" />
-        </div>
-        <div>
-          <label class="g-label">رقم هاتف المستخدم</label>
-          <input id="at-phone" type="tel" placeholder="00968XXXXXXXX"
-            class="g-input" dir="ltr" />
-          <p class="g-phone-hint">
-            <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-            كود الدولة مطلوب
-          </p>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="g-label">وقت البدء (YYMMDDHHMM)</label>
-          <input id="at-start" type="text" maxlength="10" placeholder="2601011400"
-            class="g-input" dir="ltr" />
-        </div>
-        <div>
-          <label class="g-label">وقت الانتهاء (YYMMDDHHMM)</label>
-          <input id="at-end" type="text" maxlength="10" placeholder="2601311800"
-            class="g-input" dir="ltr" />
-        </div>
-      </div>
-      <button class="g-btn g-btn-amber"
-        onclick="execCmd(() => {
-          const seq   = padSeq(eid('at-seq').value);
-          const phone = eid('at-phone').value.trim();
-          const start = eid('at-start').value.trim();
-          const end   = eid('at-end').value.trim();
-          if (!validSeq(seq)) return null;
-          if (!phone)  return warn('الرجاء إدخال رقم الهاتف'), null;
-          if (!/^\d{10}$/.test(start)) return warn('صيغة وقت البدء غير صحيحة (10 أرقام)'), null;
-          if (!/^\d{10}$/.test(end))   return warn('صيغة وقت الانتهاء غير صحيحة (10 أرقام)'), null;
-          return `#${pwd()}A${seq}#${phone}#${start}#${end}`;
-        })">
-        إضافة مستخدم مؤقت عبر SMS
-      </button>
-    </div>
-
-    <!-- Query User -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#0ea5e9;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        استعلام عن مستخدم
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="space-y-2">
-          <p class="text-xs" style="color:#64748b;">
-            <span class="g-code">#pwdA[seq]</span>
+        <!-- Set time via SIM -->
+        <div class="cmd-card p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 space-y-3">
+          <h3 class="font-bold text-blue-700 dark:text-blue-400 text-sm flex items-center gap-2">
+            📡 تفعيل رقم شريحة الجهاز
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">pwdTEL[رقم الشريحة]</code>
+            — يُفعِّل رقم شريحة الجهاز ويربطه بالنظام. مثال: <code class="code-preview">1234TEL90660001</code>
           </p>
           <div>
-            <label class="g-label">رقم التسلسل</label>
-            <input id="qry-seq" type="number" min="1" max="200" placeholder="001"
-              class="g-input" dir="ltr" />
+            <label class="field-label">رقم شريحة الجهاز</label>
+            <input id="tel-sim" type="tel"
+              class="field-input" dir="ltr"
+              oninput="this._manuallyEdited = !!this.value; if(!this.value) this._manuallyEdited=false;" />
+            <p class="phone-hint">
+              <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              يُملأ تلقائياً من رقم الشريحة المسجّل في الأعلى
+            </p>
           </div>
-          <button class="g-btn g-btn-sky"
+          <button class="btn-action"
             onclick="execCmd(() => {
-              const seq = padSeq(eid('qry-seq').value);
-              if (!validSeq(seq)) return null;
-              return `#${pwd()}A${seq}`;
+              const sim = id('tel-sim').value.trim();
+              if (!sim) return warn('الرجاء إدخال رقم الشريحة'), null;
+              return \`\${pwd()}TEL\${sim}\`;
             })">
-            استعلام عبر SMS
+            تفعيل رقم الجهاز عبر SMS
           </button>
         </div>
-        <div class="space-y-2">
-          <p class="text-xs" style="color:#64748b;">
-            <span class="g-code">#pwdAL[from]#[to]</span>
+
+        <!-- Set time manually -->
+        <div class="cmd-card p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700/50 space-y-3">
+          <h3 class="font-bold text-violet-700 dark:text-violet-400 text-sm flex items-center gap-2">
+            🕐 ضبط الوقت يدوياً
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-violet-600 dark:text-violet-400">#pwdT[YY][MM][DD][HH][MM]</code>
+            — مثال: <code class="code-preview">#1234T1601131300</code> = 13 يناير 2016 الساعة 13:00.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">التاريخ</label>
+              <input id="mt-date" type="date" class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">الوقت</label>
+              <input id="mt-time" type="time" class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action bg-violet-600 hover:bg-violet-700 active:bg-violet-800"
+            onclick="execCmd(() => {
+              const d = id('mt-date').value;
+              const t = id('mt-time').value;
+              if (!d) return warn('الرجاء اختيار التاريخ'), null;
+              if (!t) return warn('الرجاء اختيار الوقت'), null;
+              const [yr, mo, dy] = d.split('-');
+              const [hh, mm]     = t.split(':');
+              return \`#\${pwd()}T\${yr.slice(2)}\${mo}\${dy}\${hh}\${mm}\`;
+            })">
+            ضبط الوقت يدوياً عبر SMS
+          </button>
+        </div>
+
+        <!-- Change Password (duplicate here for visibility) -->
+        <div class="cmd-card p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 space-y-3">
+          <h3 class="font-bold text-amber-700 dark:text-amber-400 text-sm flex items-center gap-2">
+            🔏 تغيير كلمة المرور
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-amber-600 dark:text-amber-400">pwdP[كلمة المرور الجديدة]</code>
+            — مثال: <code class="code-preview">1234P6666</code>
           </p>
           <div>
-            <label class="g-label">من</label>
-            <input id="qr-from" type="number" min="1" max="200" placeholder="001"
-              class="g-input" dir="ltr" />
+            <label class="field-label">كلمة المرور الجديدة (4–8 أرقام)</label>
+            <input id="init-new-pwd" type="text" maxlength="8" placeholder="6666"
+              class="field-input" dir="ltr" />
           </div>
-          <div>
-            <label class="g-label">إلى</label>
-            <input id="qr-to" type="number" min="1" max="200" placeholder="010"
-              class="g-input" dir="ltr" />
-          </div>
-          <button class="g-btn g-btn-sky"
+          <button class="btn-action bg-amber-500 hover:bg-amber-600 active:bg-amber-700"
             onclick="execCmd(() => {
-              const from = padSeq(eid('qr-from').value);
-              const to   = padSeq(eid('qr-to').value);
+              const np = id('init-new-pwd').value.trim();
+              if (!/^\d{4,8}$/.test(np)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام'), null;
+              return \`\${pwd()}P\${np}\`;
+            })">
+            تغيير كلمة المرور عبر SMS
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 1: Direct Control ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⚡</span>
+        <div class="text-right">
+          <p class="font-bold text-base">التحكم المباشر</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">فتح وإغلاق الباب فوراً</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400 open" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body open">
+      <div class="px-4 pb-5 pt-1">
+        <div class="grid grid-cols-2 gap-3">
+
+          <!-- Open Gate -->
+          <button onclick="execCmd(() => `${pwd()}CC`)"
+            class="btn-send flex flex-col items-center gap-2 py-5 rounded-xl font-bold
+                   bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700
+                   text-white shadow-md active:scale-95 transition-all duration-150">
+            <span class="text-4xl">🔓</span>
+            <span class="text-base">فتح الباب</span>
+            <span class="code-preview bg-emerald-700/50 px-2 py-0.5 rounded-full opacity-80">pwdCC</span>
+          </button>
+
+          <!-- Close Gate -->
+          <button onclick="execCmd(() => `${pwd()}DD`)"
+            class="btn-send flex flex-col items-center gap-2 py-5 rounded-xl font-bold
+                   bg-red-500 hover:bg-red-600 active:bg-red-700
+                   text-white shadow-md active:scale-95 transition-all duration-150">
+            <span class="text-4xl">🔒</span>
+            <span class="text-base">إغلاق الباب</span>
+            <span class="code-preview bg-red-700/50 px-2 py-0.5 rounded-full opacity-80">pwdDD</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: User Management ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">👥</span>
+        <div class="text-right">
+          <p class="font-bold text-base">إدارة المستخدمين</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">إضافة وحذف والاستعلام عن الأرقام المصرحة</p>
+        </div>
+      </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body">
+      <div class="px-4 pb-5 pt-1 space-y-4">
+
+        <!-- Sub-tabs -->
+        <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl overflow-x-auto">
+          <button class="sub-tab active flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="addPerm">➕ إضافة دائم</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="addTimed">⏰ إضافة مؤقت</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="deleteUser">🗑️ حذف</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="queryUser">🔍 استعلام</button>
+          <button class="sub-tab flex-1 text-xs font-semibold py-2 px-3 rounded-lg whitespace-nowrap transition"
+                  data-tab="queryRange">📋 متعدد</button>
+        </div>
+
+        <!-- Tab: Add Permanent User -->
+        <div id="tab-addPerm" class="sub-panel space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]</code>
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">رقم التسلسل (001–200)</label>
+              <input id="ap-seq" type="number" min="1" max="200" placeholder="001"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">رقم هاتف المستخدم</label>
+              <input id="ap-phone" type="tel" placeholder="00968XXXXXXXX"
+                class="field-input" dir="ltr" />
+              <p class="phone-hint">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                يجب كتابة كود الدولة قبل الرقم كما في المثال (00968XXXXXXXX)
+              </p>
+            </div>
+          </div>
+          <button class="btn-action"
+            onclick="execCmd(() => {
+              const seq = padSeq(id('ap-seq').value);
+              const phone = id('ap-phone').value.trim();
+              if (!validSeq(seq)) return null;
+              if (!phone) return warn('الرجاء إدخال رقم الهاتف'), null;
+              return \`#\${pwd()}A\${seq}#\${phone}\`;
+            })">
+            إضافة المستخدم عبر SMS
+          </button>
+        </div>
+
+        <!-- Tab: Add Timed User -->
+        <div id="tab-addTimed" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]#[phone]#[start]#[end]</code>
+            <br/>صيغة الوقت: <code class="code-preview">YYMMDDHHMM</code> (مثال: <code class="code-preview">2601011430</code>)
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">رقم التسلسل (001–200)</label>
+              <input id="at-seq" type="number" min="1" max="200" placeholder="001"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">رقم هاتف المستخدم</label>
+              <input id="at-phone" type="tel" placeholder="00968XXXXXXXX"
+                class="field-input" dir="ltr" />
+              <p class="phone-hint">
+                <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                يجب كتابة كود الدولة قبل الرقم كما في المثال (00968XXXXXXXX)
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">وقت البدء (YYMMDDHHMM)</label>
+              <input id="at-start" type="text" maxlength="10" placeholder="2601011400"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">وقت الانتهاء (YYMMDDHHMM)</label>
+              <input id="at-end" type="text" maxlength="10" placeholder="2601311800"
+                class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action"
+            onclick="execCmd(() => {
+              const seq   = padSeq(id('at-seq').value);
+              const phone = id('at-phone').value.trim();
+              const start = id('at-start').value.trim();
+              const end   = id('at-end').value.trim();
+              if (!validSeq(seq)) return null;
+              if (!phone)  return warn('الرجاء إدخال رقم الهاتف'), null;
+              if (!/^\d{10}$/.test(start)) return warn('صيغة وقت البدء غير صحيحة (10 أرقام)'), null;
+              if (!/^\d{10}$/.test(end))   return warn('صيغة وقت الانتهاء غير صحيحة (10 أرقام)'), null;
+              return \`#\${pwd()}A\${seq}#\${phone}#\${start}#\${end}\`;
+            })">
+            إضافة مستخدم مؤقت عبر SMS
+          </button>
+        </div>
+
+        <!-- Tab: Delete User -->
+        <div id="tab-deleteUser" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">##pwdA[seq]</code>
+          </p>
+          <div>
+            <label class="field-label">رقم التسلسل (001–200)</label>
+            <input id="del-seq" type="number" min="1" max="200" placeholder="001"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-red-500 hover:bg-red-400 active:bg-red-700"
+            onclick="execCmd(() => {
+              const seq = padSeq(id('del-seq').value);
+              if (!validSeq(seq)) return null;
+              return \`##\${pwd()}A\${seq}\`;
+            })">
+            حذف المستخدم عبر SMS
+          </button>
+        </div>
+
+        <!-- Tab: Query User -->
+        <div id="tab-queryUser" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdA[seq]</code>
+          </p>
+          <div>
+            <label class="field-label">رقم التسلسل (001–200)</label>
+            <input id="qry-seq" type="number" min="1" max="200" placeholder="001"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-sky-500 hover:bg-sky-400 active:bg-sky-700"
+            onclick="execCmd(() => {
+              const seq = padSeq(id('qry-seq').value);
+              if (!validSeq(seq)) return null;
+              return \`#\${pwd()}A\${seq}\`;
+            })">
+            استعلام عن مستخدم عبر SMS
+          </button>
+        </div>
+
+        <!-- Tab: Query Range -->
+        <div id="tab-queryRange" class="sub-panel hidden space-y-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            الكود: <code class="code-preview font-bold text-blue-600 dark:text-blue-400">#pwdAL[start]#[end]</code>
+            — استعلام عن مجموعة مستخدمين دفعةً واحدة.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="field-label">من التسلسل (001–200)</label>
+              <input id="qr-from" type="number" min="1" max="200" placeholder="001"
+                class="field-input" dir="ltr" />
+            </div>
+            <div>
+              <label class="field-label">إلى التسلسل (001–200)</label>
+              <input id="qr-to" type="number" min="1" max="200" placeholder="010"
+                class="field-input" dir="ltr" />
+            </div>
+          </div>
+          <button class="btn-action bg-sky-500 hover:bg-sky-400 active:bg-sky-700"
+            onclick="execCmd(() => {
+              const from = padSeq(id('qr-from').value);
+              const to   = padSeq(id('qr-to').value);
               if (!validSeq(from)) return null;
               if (!validSeq(to))   return null;
-              if (parseInt(from) > parseInt(to)) return warn('رقم البداية يجب أن يكون أصغر من النهاية'), null;
-              return `#${pwd()}AL${from}#${to}`;
+              if (parseInt(from) > parseInt(to)) return warn('رقم البداية يجب أن يكون أصغر من رقم النهاية'), null;
+              return \`#\${pwd()}AL\${from}#\${to}\`;
             })">
             استعلام متعدد عبر SMS
           </button>
         </div>
+
       </div>
     </div>
+  </section>
 
-  </div>
-
-  <!-- ═══ TAB 3: Maintenance (صيانة) ═══ -->
-  <div id="page-maintenance" class="tab-page space-y-3">
-
-    <!-- Control Mode -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#a855f7;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-        </svg>
-        وضع التحكم (من يمكنه الفتح)
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="execCmd(() => `#${pwd()}ALL`)"
-          class="g-btn g-btn-purple flex flex-col items-center gap-1.5 py-4 rounded-xl">
-          <span class="text-2xl">🌐</span>
-          <span>أي رقم</span>
-          <span class="g-code">#pwdALL</span>
-        </button>
-        <button onclick="execCmd(() => `#${pwd()}AUT`)"
-          class="g-btn g-btn-indigo flex flex-col items-center gap-1.5 py-4 rounded-xl">
-          <span class="text-2xl">✅</span>
-          <span>المصرح لهم فقط</span>
-          <span class="g-code">#pwdAUT</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Change Password -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#f59e0b;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-        </svg>
-        تغيير كلمة المرور
-      </div>
-      <div>
-        <label class="g-label">كلمة المرور الجديدة (4–8 أرقام)</label>
-        <input id="new-pwd" type="text" maxlength="8" placeholder="4321" class="g-input" dir="ltr" />
-      </div>
-      <button class="g-btn g-btn-amber"
-        onclick="execCmd(() => {
-          const np = eid('new-pwd').value.trim();
-          if (!/^\d{4,8}$/.test(np)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام'), null;
-          return `${pwd()}P${np}`;
-        })">
-        تغيير كلمة المرور عبر SMS
-      </button>
-    </div>
-
-    <!-- Relay Duration -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#14b8a6;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        مدة فتح الباب (تفعيل الريلاي)
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">#pwdGOT[000–999]</span>
-      </p>
-      <div>
-        <label class="g-label">المدة بالثواني (000–999)</label>
-        <input id="relay-dur" type="number" min="0" max="999" placeholder="005"
-          class="g-input" dir="ltr" />
-      </div>
-      <button class="g-btn g-btn-teal"
-        onclick="execCmd(() => {
-          const raw = eid('relay-dur').value;
-          const dur = String(parseInt(raw) || 0).padStart(3, '0');
-          if (!validDur(dur)) return null;
-          return `#${pwd()}GOT${dur}`;
-        })">
-        ضبط مدة فتح الباب عبر SMS
-      </button>
-    </div>
-
-    <!-- Status Query -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#0ea5e9;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-        </svg>
-        استعلام عن حالة الجهاز
-      </div>
-      <button onclick="execCmd(() => `${pwd()}EE`)"
-        class="g-btn g-btn-sky">
-        استعلام عن حالة الجهاز عبر SMS
-      </button>
-    </div>
-
-    <!-- IMEI Query -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#64748b;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
-        </svg>
-        الاستعلام عن IMEI
-      </div>
-      <button onclick="execCmd(() => `#${pwd()}IMEI`)"
-        class="g-btn g-btn-slate">
-        استعلام عن IMEI عبر SMS
-      </button>
-    </div>
-
-    <!-- Disable Confirmation Messages -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#f43f5e;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
-        </svg>
-        إيقاف رسائل التأكيد
-      </div>
-      <p class="text-xs" style="color:#64748b;">يوقف الرسائل التلقائية عند الفتح أو الإغلاق</p>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="execCmd(() => `##${pwd()}G`)"
-          class="g-btn g-btn-rose flex flex-col items-center gap-1 py-3 rounded-xl text-sm">
-          <span class="text-xl">🔓🔕</span>
-          <span>إيقاف تأكيد الفتح</span>
-        </button>
-        <button onclick="execCmd(() => `##${pwd()}GOFF`)"
-          class="g-btn g-btn-rose flex flex-col items-center gap-1 py-3 rounded-xl text-sm" style="opacity:0.85;">
-          <span class="text-xl">🔒🔕</span>
-          <span>إيقاف تأكيد الإغلاق</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Auto-Check Report -->
-    <div class="g-card space-y-3">
-      <div class="g-section-title">
-        <svg class="w-5 h-5" style="color:#84cc16;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/>
-        </svg>
-        تقرير الفحص التلقائي
-      </div>
-      <p class="text-xs" style="color:#64748b;">
-        الكود: <span class="g-code">#pwdT#[000–999]</span> — <strong>000</strong> = إلغاء
-      </p>
-      <div>
-        <label class="g-label">عدد الساعات (000 = إلغاء، 001–999 = تفعيل)</label>
-        <input id="auto-hours" type="number" min="0" max="999" placeholder="024"
-          class="g-input" dir="ltr" />
-      </div>
-      <button class="g-btn g-btn-lime"
-        onclick="execCmd(() => {
-          const raw  = eid('auto-hours').value;
-          const hrs  = String(parseInt(raw) || 0).padStart(3, '0');
-          if (!/^\d{3}$/.test(hrs) || parseInt(hrs) > 999)
-            return warn('القيمة يجب أن تكون بين 000 و 999'), null;
-          return `#${pwd()}T#${hrs}`;
-        })">
-        ضبط التقرير التلقائي عبر SMS
-      </button>
-    </div>
-
-    <!-- Footer info -->
-    <div class="g-card" style="border-right-color:#f59e0b;">
+  <!-- ── SECTION 3: System Settings ── -->
+  <section class="rounded-2xl overflow-hidden shadow-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <button class="acc-toggle w-full flex items-center justify-between px-5 py-4
+                   hover:bg-gray-50 dark:hover:bg-gray-700/60 transition text-right">
       <div class="flex items-center gap-3">
-        <img src="Image/radma_logo.png" alt="RADMA" class="h-8 w-auto opacity-80" onerror="this.style.display='none'" />
-        <div>
-          <p class="font-bold text-sm" style="color:#f1f5f9;">RADMA</p>
-          <p class="text-xs" style="color:#64748b;">للحلول التقنية والأمنية</p>
+        <span class="text-2xl">⚙️</span>
+        <div class="text-right">
+          <p class="font-bold text-base">إعدادات النظام</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">وضع التحكم، مدة الريلاي، IMEI، رسائل التأكيد، والتقارير</p>
         </div>
       </div>
-      <div class="grid grid-cols-3 gap-2 mt-3">
-        <a href="https://radma.co" target="_blank" class="text-center p-2 rounded-lg" style="background:#0f172a;">
-          <p class="text-xs" style="color:#94a3b8;">🌐 الموقع</p>
-        </a>
-        <a href="https://instagram.com/radma_om" target="_blank" class="text-center p-2 rounded-lg" style="background:#0f172a;">
-          <p class="text-xs" style="color:#94a3b8;">📸 انستجرام</p>
-        </a>
-        <a href="tel:+96890660001" class="text-center p-2 rounded-lg" style="background:#0f172a;">
-          <p class="text-xs" style="color:#94a3b8;">📞 اتصال</p>
-        </a>
-      </div>
-      <p class="text-center text-xs mt-3" style="color:#475569;">© 2025 RADMA — جميع الحقوق محفوظة</p>
-    </div>
+      <svg class="acc-chevron w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    <div class="acc-body">
+      <div class="px-4 pb-5 pt-1 space-y-5">
 
-  </div>
+        <!-- Change Password -->
+        <div class="cmd-card p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 space-y-3">
+          <h3 class="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-2 text-sm">
+            🔏 تغيير كلمة المرور
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-amber-600 dark:text-amber-400">pwdP[newpwd]</code>
+          </p>
+          <div>
+            <label class="field-label">كلمة المرور الجديدة (4–8 أرقام)</label>
+            <input id="new-pwd" type="text" maxlength="8" placeholder="4321"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-amber-500 hover:bg-amber-600 active:bg-amber-700"
+            onclick="execCmd(() => {
+              const np = id('new-pwd').value.trim();
+              if (!/^\d{4,8}$/.test(np)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام'), null;
+              return \`\${pwd()}P\${np}\`;
+            })">
+            تغيير كلمة المرور عبر SMS
+          </button>
+        </div>
+
+        <!-- Control Mode -->
+        <div class="cmd-card p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700/50 space-y-3">
+          <h3 class="font-bold text-purple-700 dark:text-purple-400 flex items-center gap-2 text-sm">
+            🛡️ وضع التحكم (من يمكنه الفتح)
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="execCmd(() => `#${pwd()}ALL`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-purple-500 hover:bg-purple-600 active:bg-purple-700
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">🌐</span>
+              <span>أي رقم</span>
+              <span class="code-preview bg-purple-700/50 px-2 py-0.5 rounded-full opacity-80 text-xs">#pwdALL</span>
+            </button>
+            <button onclick="execCmd(() => `#${pwd()}AUT`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">✅</span>
+              <span>المصرح لهم فقط</span>
+              <span class="code-preview bg-indigo-700/50 px-2 py-0.5 rounded-full opacity-80 text-xs">#pwdAUT</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Relay Duration -->
+        <div class="cmd-card p-4 rounded-xl bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700/50 space-y-3">
+          <h3 class="font-bold text-teal-700 dark:text-teal-400 flex items-center gap-2 text-sm">
+            ⏱️ مدة فتح الباب (تفعيل الريلاي)
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-teal-600 dark:text-teal-400">#pwdGOT[000–999]</code>
+          </p>
+          <div>
+            <label class="field-label">المدة بالثواني (000–999)</label>
+            <input id="relay-dur" type="number" min="0" max="999" placeholder="005"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-teal-500 hover:bg-teal-600 active:bg-teal-700"
+            onclick="execCmd(() => {
+              const raw = id('relay-dur').value;
+              const dur = String(parseInt(raw) || 0).padStart(3, '0');
+              if (!validDur(dur)) return null;
+              return \`#\${pwd()}GOT\${dur}\`;
+            })">
+            ضبط مدة فتح الباب عبر SMS
+          </button>
+        </div>
+
+        <!-- Status Query -->
+        <div class="cmd-card p-4 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/50 space-y-3">
+          <h3 class="font-bold text-sky-700 dark:text-sky-400 flex items-center gap-2 text-sm">
+            📊 الاستعلام عن حالة الجهاز
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-sky-600 dark:text-sky-400">pwdEE</code>
+          </p>
+          <button onclick="execCmd(() => `${pwd()}EE`)"
+            class="btn-action bg-sky-500 hover:bg-sky-400 active:bg-sky-700">
+            استعلام عن حالة الجهاز عبر SMS
+          </button>
+        </div>
+
+        <!-- IMEI & System Version -->
+        <div class="cmd-card p-4 rounded-xl bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700/50 space-y-3">
+          <h3 class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 text-sm">
+            🔢 الاستعلام عن IMEI وإصدار النظام
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-slate-600 dark:text-slate-400">#pwdIMEI</code>
+          </p>
+          <button onclick="execCmd(() => `#${pwd()}IMEI`)"
+            class="btn-action bg-slate-500 hover:bg-slate-400 active:bg-slate-700">
+            استعلام عن IMEI عبر SMS
+          </button>
+        </div>
+
+        <!-- Disable Confirmation Messages -->
+        <div class="cmd-card p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/50 space-y-3">
+          <h3 class="font-bold text-rose-700 dark:text-rose-400 flex items-center gap-2 text-sm">
+            🔕 إيقاف رسائل التأكيد
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            يوقف الرسائل التلقائية التي يرسلها الجهاز عند الفتح أو الإغلاق.
+          </p>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="execCmd(() => `##${pwd()}G`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-rose-500 hover:bg-rose-600 active:bg-rose-700
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">🔓🔕</span>
+              <span class="text-center leading-tight">إيقاف تأكيد<br/>الفتح</span>
+              <span class="code-preview bg-rose-700/50 px-2 py-0.5 rounded-full opacity-80 text-xs">##pwdG</span>
+            </button>
+            <button onclick="execCmd(() => `##${pwd()}GOFF`)"
+              class="btn-send flex flex-col items-center gap-1.5 py-4 px-3 rounded-xl font-semibold text-sm
+                     bg-rose-700 hover:bg-rose-800 active:bg-rose-900
+                     text-white shadow active:scale-95 transition-all">
+              <span class="text-2xl">🔒🔕</span>
+              <span class="text-center leading-tight">إيقاف تأكيد<br/>الإغلاق</span>
+              <span class="code-preview bg-rose-900/50 px-2 py-0.5 rounded-full opacity-80 text-xs">##pwdGOFF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Auto-Check Report -->
+        <div class="cmd-card p-4 rounded-xl bg-lime-50 dark:bg-lime-900/20 border border-lime-200 dark:border-lime-700/50 space-y-3">
+          <h3 class="font-bold text-lime-700 dark:text-lime-400 flex items-center gap-2 text-sm">
+            📡 تقرير الفحص التلقائي
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            الكود: <code class="code-preview font-bold text-lime-600 dark:text-lime-400">#pwdT#[000–999]</code>
+            — عدد الساعات بين كل تقرير. <strong>000</strong> = إلغاء التقرير التلقائي.
+          </p>
+          <div>
+            <label class="field-label">عدد الساعات (000 = إلغاء، 001–999 = تفعيل)</label>
+            <input id="auto-hours" type="number" min="0" max="999" placeholder="024"
+              class="field-input" dir="ltr" />
+          </div>
+          <button class="btn-action bg-lime-600 hover:bg-lime-700 active:bg-lime-800"
+            onclick="execCmd(() => {
+              const raw  = id('auto-hours').value;
+              const hrs  = String(parseInt(raw) || 0).padStart(3, '0');
+              if (!/^\d{3}$/.test(hrs) || parseInt(hrs) > 999)
+                return warn('القيمة يجب أن تكون بين 000 و 999'), null;
+              return \`#\${pwd()}T#\${hrs}\`;
+            })">
+            ضبط التقرير التلقائي عبر SMS
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
 
 </main>
 
 <!-- ══════════════════════════════════════════
-     BOTTOM TAB BAR
+     FOOTER — RADMA Company Info
 ══════════════════════════════════════════ -->
-<nav class="bottom-bar">
-  <div class="max-w-lg mx-auto flex">
-    <button class="bottom-tab active" data-page="control">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-      </svg>
-      <span>تحكم</span>
-    </button>
-    <button class="bottom-tab" data-page="users">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-      </svg>
-      <span>مستخدمون</span>
-    </button>
-    <button class="bottom-tab" data-page="maintenance">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-      </svg>
-      <span>صيانة</span>
-    </button>
+<footer class="max-w-2xl mx-auto px-4 pb-8 pt-2">
+  <div class="rounded-2xl bg-gradient-to-l from-blue-700 to-indigo-700 dark:from-blue-900 dark:to-indigo-900 shadow-lg px-5 py-4">
+
+    <!-- Logo + brand row -->
+    <div class="flex items-center gap-3 mb-4">
+      <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/radma_logo.png"
+           alt="RADMA Logo"
+           class="h-9 w-auto object-contain drop-shadow"
+           onerror="this.style.display='none'" />
+      <div>
+        <p class="text-white font-extrabold text-sm leading-tight">RADMA</p>
+        <p class="text-blue-200 text-xs">للحلول التقنية والأمنية</p>
+      </div>
+    </div>
+
+    <!-- Contact links -->
+    <div class="grid grid-cols-1 gap-2">
+
+      <!-- Website -->
+      <a href="https://radma.co" target="_blank" rel="noopener noreferrer"
+         class="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:bg-white/30
+                transition rounded-xl px-4 py-2.5 group">
+        <span class="text-lg shrink-0">🌐</span>
+        <div class="text-right flex-1">
+          <p class="text-white/60 text-xs">الموقع الرسمي</p>
+          <p class="text-white font-semibold text-sm group-hover:underline" dir="ltr">radma.co</p>
+        </div>
+        <svg class="w-4 h-4 text-white/40 group-hover:text-white transition rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+
+      <!-- Instagram -->
+      <a href="https://instagram.com/radma_om" target="_blank" rel="noopener noreferrer"
+         class="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:bg-white/30
+                transition rounded-xl px-4 py-2.5 group">
+        <span class="text-lg shrink-0">📸</span>
+        <div class="text-right flex-1">
+          <p class="text-white/60 text-xs">انستجرام</p>
+          <p class="text-white font-semibold text-sm group-hover:underline" dir="ltr">@radma_om</p>
+        </div>
+        <svg class="w-4 h-4 text-white/40 group-hover:text-white transition rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+
+      <!-- Phone / WhatsApp -->
+      <a href="tel:+96890660001"
+         class="flex items-center gap-3 bg-white/10 hover:bg-white/20 active:bg-white/30
+                transition rounded-xl px-4 py-2.5 group">
+        <span class="text-lg shrink-0">📞</span>
+        <div class="text-right flex-1">
+          <p class="text-white/60 text-xs">رقم التواصل</p>
+          <p class="text-white font-semibold text-sm" dir="ltr">90660001</p>
+        </div>
+        <svg class="w-4 h-4 text-white/40 group-hover:text-white transition rotate-180 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+
+    </div>
+
+    <p class="text-center text-white/30 text-xs mt-4">© 2025 RADMA — جميع الحقوق محفوظة</p>
   </div>
-</nav>
+</footer>
 
 <!-- ══════════════════════════════════════════
-     SETUP WIZARD MODAL
+     PREVIEW MODAL / TOAST
 ══════════════════════════════════════════ -->
-<div id="setup-wizard" class="g-overlay">
-  <div class="g-modal space-y-4" onclick="event.stopPropagation()">
+
+<!-- Toast notification -->
+<div id="toast"
+  class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden
+         bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900
+         text-sm font-semibold px-5 py-3 rounded-full shadow-2xl
+         transition-all duration-300 opacity-0 translate-y-4 max-w-xs text-center">
+</div>
+
+<!-- Code Preview Modal -->
+<div id="modal"
+  class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-4"
+  onclick="closeModal()">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4"
+       onclick="event.stopPropagation()">
+
+    <div class="flex flex-col items-center gap-1">
+      <img src="https://raw.githubusercontent.com/mohdhadhrami/RTU5034/01a2560b01f0d31a5e78db9c1e3f969d0a9f1693/Image/radma_logo.png"
+           alt="RADMA" class="h-7 w-auto object-contain opacity-80 dark:opacity-60"
+           onerror="this.style.display='none'" />
+      <h3 class="font-bold text-lg text-center">الكود الناتج</h3>
+    </div>
+
+    <!-- Code display -->
+    <div class="bg-gray-100 dark:bg-gray-700 rounded-xl px-4 py-3 text-center">
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">سيتم إرسال هذا الكود إلى الجهاز:</p>
+      <code id="modal-code"
+        class="text-blue-600 dark:text-blue-400 font-mono font-bold text-lg break-all tracking-wider"></code>
+    </div>
+
+    <!-- To number display -->
+    <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+      إلى الرقم: <span id="modal-number" class="font-semibold text-gray-700 dark:text-gray-300 dir-ltr" dir="ltr"></span>
+    </div>
+
+    <!-- Actions -->
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="closeModal()"
+        class="py-3 rounded-xl font-semibold text-sm bg-gray-200 dark:bg-gray-600
+               hover:bg-gray-300 dark:hover:bg-gray-500 transition active:scale-95">
+        إلغاء
+      </button>
+      <button id="modal-confirm"
+        class="py-3 rounded-xl font-bold text-sm bg-green-500 hover:bg-green-600
+               active:bg-green-700 text-white transition active:scale-95">
+        ✅ إرسال الآن
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAILWIND COMPONENT CLASSES (via @apply equivalent)
+══════════════════════════════════════════ -->
+<style>
+  /* ===== G202 Style: Labels ===== */
+  .field-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+    color: #94a3b8;
+  }
+  /* ===== G202 Style: Input fields ===== */
+  .field-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    outline: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  /* Light mode */
+  .field-input {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+  }
+  .field-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+  .field-input::placeholder { color: #94a3b8; }
+  /* Dark mode */
+  .dark .field-input {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+  .dark .field-input:focus {
+    border-color: #3b82f6;
+  }
+  .dark .field-input::placeholder { color: #64748b; }
+  .dark .field-label { color: #94a3b8; }
+
+  /* ===== G202 Style: Phone hint ===== */
+  .phone-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #f59e0b;
+    font-weight: 500;
+  }
+
+  /* ===== G202 Style: Action buttons ===== */
+  .btn-action {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+    background-color: #3b82f6;
+  }
+  .btn-action:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+  }
+
+  /* ===== G202 Style: Sub-tabs ===== */
+  .sub-tab {
+    color: #94a3b8;
+    transition: all 0.2s;
+  }
+  .sub-tab:hover {
+    color: #f1f5f9;
+  }
+  .sub-tab.active {
+    background-color: #334155;
+    color: #f1f5f9;
+    box-shadow: none;
+  }
+  .dark .sub-tab.active {
+    background-color: #334155;
+    color: #f1f5f9;
+  }
+
+  /* ===== G202 Style: Card sections ===== */
+  .dark .cmd-card {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+  }
+
+  /* ===== Setup wizard modal ===== */
+  .setup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .setup-overlay.open { display: flex; }
+  .setup-modal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 24rem;
+    padding: 1.5rem;
+    color: #f1f5f9;
+  }
+  .setup-modal .field-input {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+  .setup-modal .field-input::placeholder { color: #64748b; }
+  .setup-modal .field-label { color: #94a3b8; }
+</style>
+
+<!-- ══════════════════════════════════════════
+     SETUP WIZARD MODAL (First Launch)
+══════════════════════════════════════════ -->
+<div id="setup-wizard" class="setup-overlay">
+  <div class="setup-modal space-y-4" onclick="event.stopPropagation()">
     <div class="flex flex-col items-center gap-2">
       <img src="Image/radma_logo.png" alt="RADMA" class="h-14 w-auto" onerror="this.style.display='none'" />
-      <h2 class="font-extrabold text-lg" style="color:#f1f5f9;">إعداد الجهاز</h2>
+      <h2 class="font-extrabold text-lg">إعداد الجهاز</h2>
       <p class="text-xs text-center" style="color:#94a3b8;">سجّل بيانات جهاز RTU5034 للبدء</p>
     </div>
-
     <div>
-      <label class="g-label">اسم الجهاز</label>
-      <input id="setup-name" type="text" placeholder="بوابة المنزل" class="g-input" />
+      <label class="field-label">اسم الجهاز</label>
+      <input id="setup-name" type="text" placeholder="بوابة المنزل" class="field-input" />
     </div>
-
     <div>
-      <label class="g-label">رقم شريحة الجهاز</label>
-      <input id="setup-number" type="tel" placeholder="90660001" class="g-input" dir="ltr" />
-      <p class="g-phone-hint">
+      <label class="field-label">رقم شريحة الجهاز</label>
+      <input id="setup-number" type="tel" placeholder="90660001" class="field-input" dir="ltr" />
+      <p class="phone-hint">
         <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         أدخل رقم الشريحة المركّبة في جهاز فاتح البوابة
       </p>
     </div>
-
     <div>
-      <label class="g-label">كلمة المرور</label>
+      <label class="field-label">كلمة المرور</label>
       <input id="setup-password" type="text" value="1234" maxlength="8"
-        class="g-input" dir="ltr" style="letter-spacing:0.15em;" />
+        class="field-input" dir="ltr" style="letter-spacing:0.15em;" />
       <p class="text-xs mt-1" style="color:#64748b;">الافتراضية: 1234</p>
     </div>
-
-    <button id="setup-save-btn" class="g-btn g-btn-blue" onclick="saveSetup()">
+    <button class="btn-action" style="background-color:#3b82f6;" onclick="saveSetup()">
       حفظ والمتابعة
     </button>
-
-    <p id="setup-skip" class="text-center text-xs cursor-pointer" style="color:#64748b; display:none;"
-       onclick="closeSetupWizard()">
-      تخطي
-    </p>
   </div>
 </div>
-
-<!-- ══════════════════════════════════════════
-     SETTINGS MODAL (Add/Switch Devices)
-══════════════════════════════════════════ -->
-<div id="settings-modal" class="g-overlay" onclick="closeSettingsModal()">
-  <div class="g-modal space-y-4" onclick="event.stopPropagation()">
-    <div class="flex items-center justify-between">
-      <button onclick="closeSettingsModal()" class="p-1 rounded-lg hover:bg-white/10">
-        <svg class="w-5 h-5" style="color:#94a3b8;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-      <h2 class="font-bold text-base" style="color:#f1f5f9;">إعدادات الأجهزة</h2>
-    </div>
-
-    <div id="devices-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
-
-    <button class="g-btn g-btn-blue" onclick="showSetupWizard(true)">
-      + إضافة جهاز جديد
-    </button>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     CODE PREVIEW MODAL
-══════════════════════════════════════════ -->
-<div id="modal" class="g-overlay" onclick="closeCodeModal()">
-  <div class="g-modal space-y-4" onclick="event.stopPropagation()">
-    <div class="flex flex-col items-center gap-1">
-      <img src="Image/radma_logo.png" alt="RADMA" class="h-7 w-auto opacity-80" onerror="this.style.display='none'" />
-      <h3 class="font-bold text-lg">الكود الناتج</h3>
-    </div>
-    <div class="rounded-xl px-4 py-3 text-center" style="background:#0f172a;">
-      <p class="text-xs mb-1" style="color:#64748b;">سيتم إرسال هذا الكود إلى الجهاز:</p>
-      <code id="modal-code" class="font-mono font-bold text-lg break-all tracking-wider" style="color:#60a5fa;"></code>
-    </div>
-    <div class="text-center text-sm" style="color:#94a3b8;">
-      إلى الرقم: <span id="modal-number" class="font-semibold" style="color:#f1f5f9;" dir="ltr"></span>
-    </div>
-    <div class="grid grid-cols-2 gap-3">
-      <button onclick="closeCodeModal()" class="g-btn g-btn-slate">إلغاء</button>
-      <button id="modal-confirm" class="g-btn g-btn-green">✅ إرسال الآن</button>
-    </div>
-  </div>
-</div>
-
-<!-- Toast -->
-<div id="toast" class="g-toast"></div>
 
 <!-- ══════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════ -->
 <script>
   /* ── Utilities ────────────────────────── */
-  const eid = (i) => document.getElementById(i);
-
-  /* ── Device Storage ──────────────────── */
-  function getDevices() {
-    try { return JSON.parse(localStorage.getItem('rtu5034_devices') || '[]'); }
-    catch { return []; }
-  }
-
-  function setDevices(arr) {
-    localStorage.setItem('rtu5034_devices', JSON.stringify(arr));
-  }
-
-  function getCurrentIdx() {
-    return parseInt(localStorage.getItem('rtu5034_current_device') || '0');
-  }
-
-  function setCurrentIdx(idx) {
-    localStorage.setItem('rtu5034_current_device', String(idx));
-  }
-
-  function currentDevice() {
-    const devs = getDevices();
-    return devs[getCurrentIdx()] || { name: '', number: '', password: '1234' };
-  }
+  const id = (i) => document.getElementById(i);
 
   function pwd() {
-    return (currentDevice().password || '1234').trim().toUpperCase();
+    return (id('password').value || '1234').trim().toUpperCase();
   }
 
   function warn(msg) {
@@ -962,225 +1004,149 @@
 
   /* ── Core SMS sender ──────────────────── */
   function execCmd(codeBuilder) {
-    const dev = currentDevice();
-    if (!dev.number) {
-      warn('الرجاء تسجيل رقم شريحة الجهاز أولاً');
-      showSetupWizard();
+    const deviceNum = id('deviceNumber').value.trim();
+    if (!deviceNum) {
+      warn('الرجاء إدخال رقم شريحة الجهاز أولاً');
+      return;
+    }
+    if (!pwd()) {
+      warn('الرجاء إدخال كلمة المرور');
       return;
     }
 
     const rawCode = codeBuilder();
-    if (!rawCode) return;
+    if (!rawCode) return;                       // builder returned null → already warned
 
-    const code = rawCode.toUpperCase().replace(/\s+/g, '');
-    showCodeModal(code, dev.number);
+    const code = rawCode.toUpperCase().replace(/\s+/g, '');  // uppercase, no spaces
+    showModal(code, deviceNum);
   }
 
   function sendViaSMS(code, deviceNum) {
-    window.location.href = `sms:${deviceNum}?body=${encodeURIComponent(code)}`;
+    const url = `sms:${deviceNum}?body=${encodeURIComponent(code)}`;
+    window.location.href = url;
   }
 
-  /* ── Code Preview Modal ──────────────── */
-  function showCodeModal(code, deviceNum) {
-    eid('modal-code').textContent = code;
-    eid('modal-number').textContent = deviceNum;
-    eid('modal-confirm').onclick = () => {
-      closeCodeModal();
+  /* ── Modal ───────────────────────────── */
+  function showModal(code, deviceNum) {
+    id('modal-code').textContent = code;
+    id('modal-number').textContent = deviceNum;
+    id('modal-confirm').onclick = () => {
+      closeModal();
       sendViaSMS(code, deviceNum);
       showToast('✅ تم فتح تطبيق الرسائل');
     };
-    eid('modal').classList.add('open');
+    id('modal').classList.remove('hidden');
+    id('modal').classList.add('flex');
   }
 
-  function closeCodeModal() {
-    eid('modal').classList.remove('open');
+  function closeModal() {
+    id('modal').classList.add('hidden');
+    id('modal').classList.remove('flex');
   }
 
   /* ── Toast ───────────────────────────── */
   let toastTimer;
   function showToast(msg, type = 'success') {
-    const t = eid('toast');
+    const t = id('toast');
     t.textContent = msg;
-    t.className = 'g-toast show' + (type === 'warn' ? ' warn' : '');
+    t.classList.remove('hidden', 'opacity-0', 'translate-y-4');
+    if (type === 'warn') {
+      t.classList.add('!bg-amber-500');
+    } else {
+      t.classList.remove('!bg-amber-500');
+    }
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
-      t.classList.remove('show');
+      t.classList.add('opacity-0', 'translate-y-4');
+      setTimeout(() => t.classList.add('hidden'), 300);
     }, 2800);
   }
 
-  /* ── Bottom Tab Navigation ──────────── */
-  document.querySelectorAll('.bottom-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.bottom-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      eid('page-' + tab.dataset.page).classList.add('active');
+  /* ── Dark Mode ───────────────────────── */
+  const html = document.documentElement;
+  const darkBtn = id('darkToggle');
+
+  function applyDark(dark) {
+    if (dark) {
+      html.classList.add('dark');
+      darkBtn.textContent = '☀️';
+    } else {
+      html.classList.remove('dark');
+      darkBtn.textContent = '🌙';
+    }
+  }
+
+  // Initialise from system preference
+  applyDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => applyDark(e.matches));
+
+  darkBtn.addEventListener('click', () => applyDark(!html.classList.contains('dark')));
+
+  /* ── Accordion ───────────────────────── */
+  document.querySelectorAll('.acc-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body    = btn.nextElementSibling;
+      const chevron = btn.querySelector('.acc-chevron');
+      body.classList.toggle('open');
+      chevron.classList.toggle('open');
     });
   });
 
-  /* ── Setup Wizard ──────────────────── */
-  let setupIsAdding = false;
-
-  function showSetupWizard(isAdding) {
-    setupIsAdding = !!isAdding;
-    closeSettingsModal();
-    eid('setup-name').value = '';
-    eid('setup-number').value = '';
-    eid('setup-password').value = '1234';
-    eid('setup-skip').style.display = isAdding ? 'block' : 'none';
-    eid('setup-wizard').classList.add('open');
-  }
-
-  function closeSetupWizard() {
-    eid('setup-wizard').classList.remove('open');
-  }
-
-  function saveSetup() {
-    const name   = eid('setup-name').value.trim() || 'جهاز بدون اسم';
-    const number = eid('setup-number').value.trim();
-    const pass   = eid('setup-password').value.trim() || '1234';
-
-    if (!number) return warn('الرجاء إدخال رقم شريحة الجهاز');
-    if (!/^\d{4,8}$/.test(pass)) return warn('كلمة المرور يجب أن تكون 4–8 أرقام');
-
-    const devs = getDevices();
-    devs.push({ name, number, password: pass });
-    setDevices(devs);
-    setCurrentIdx(devs.length - 1);
-    closeSetupWizard();
-    refreshDeviceUI();
-    showToast('✅ تم حفظ بيانات الجهاز');
-
-    // If first device, prompt activation
-    if (devs.length === 1) {
-      setTimeout(() => {
-        showToast('📡 الآن فعّل رقم الشريحة بالضغط على زر التفعيل');
-      }, 1500);
-    }
-  }
-
-  /* ── Settings Modal ────────────────── */
-  function showSettingsModal() {
-    renderDeviceList();
-    eid('settings-modal').classList.add('open');
-  }
-
-  function closeSettingsModal() {
-    eid('settings-modal').classList.remove('open');
-  }
-
-  // Expose to settings gear button
-  function showSetupWizardFromSettings() {
-    showSettingsModal();
-  }
-
-  function renderDeviceList() {
-    const devs = getDevices();
-    const curIdx = getCurrentIdx();
-    const container = eid('devices-list');
-    container.innerHTML = '';
-
-    devs.forEach((dev, i) => {
-      const active = i === curIdx;
-      const div = document.createElement('div');
-      div.style.cssText = `background:${active ? '#334155' : '#0f172a'}; border:1px solid ${active ? '#3b82f6' : '#334155'}; border-radius:0.75rem; padding:0.75rem; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all 0.2s;`;
-      div.innerHTML = `
-        <div style="flex:1;" onclick="switchDevice(${i})">
-          <p style="font-weight:700; font-size:0.875rem; color:#f1f5f9;">${dev.name}</p>
-          <p style="font-size:0.75rem; color:#94a3b8;" dir="ltr">${dev.number}</p>
-        </div>
-        ${active ? '<span style="color:#3b82f6; font-size:1.25rem;">✓</span>' : ''}
-        <button onclick="event.stopPropagation(); deleteDevice(${i})" style="margin-right:0.5rem; padding:0.25rem; color:#ef4444; background:transparent; border:none; cursor:pointer; font-size:1rem;">✕</button>
-      `;
-      container.appendChild(div);
+  /* ── Sub-tabs (User Management) ─────── */
+  document.querySelectorAll('.sub-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      // deactivate all
+      document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.sub-panel').forEach(p => p.classList.add('hidden'));
+      // activate clicked
+      tab.classList.add('active');
+      id('tab-' + tab.dataset.tab).classList.remove('hidden');
     });
+  });
 
-    if (devs.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:#64748b; font-size:0.875rem; padding:1rem;">لا توجد أجهزة مسجّلة</p>';
-    }
+  /* ── Save settings to localStorage ──── */
+  const FIELDS = ['deviceNumber', 'password'];
+  FIELDS.forEach(f => {
+    const el = id(f);
+    const saved = localStorage.getItem('rtu5034_' + f);
+    if (saved) el.value = saved;
+    el.addEventListener('input', () => {
+      localStorage.setItem('rtu5034_' + f, el.value);
+      if (f === 'deviceNumber') syncTelSim(el.value);
+    });
+  });
+
+  /* ── Auto-fill tel-sim from deviceNumber on load ──── */
+  function syncTelSim(val) {
+    const t = id('tel-sim');
+    if (t && !t._manuallyEdited) t.value = val;
+  }
+  syncTelSim(id('deviceNumber').value);
+
+  /* ── Setup Wizard (First Launch) ──── */
+  function saveSetup() {
+    const name   = id('setup-name').value.trim() || 'RTU5034 Gate';
+    const number = id('setup-number').value.trim();
+    const pass   = id('setup-password').value.trim() || '1234';
+    if (!number) { warn('الرجاء إدخال رقم شريحة الجهاز'); return; }
+
+    id('deviceNumber').value = number;
+    id('password').value = pass;
+    localStorage.setItem('rtu5034_deviceNumber', number);
+    localStorage.setItem('rtu5034_password', pass);
+    localStorage.setItem('rtu5034_deviceName', name);
+    localStorage.setItem('rtu5034_setupDone', '1');
+    syncTelSim(number);
+    id('setup-wizard').classList.remove('open');
+    showToast('✅ تم حفظ بيانات الجهاز — فعّل الشريحة الآن');
   }
 
-  function switchDevice(idx) {
-    setCurrentIdx(idx);
-    closeSettingsModal();
-    refreshDeviceUI();
-    showToast('✅ تم التبديل إلى ' + currentDevice().name);
+  // Show wizard on first launch
+  if (!localStorage.getItem('rtu5034_setupDone') && !id('deviceNumber').value) {
+    id('setup-wizard').classList.add('open');
   }
 
-  function deleteDevice(idx) {
-    const devs = getDevices();
-    if (devs.length <= 1 && idx === 0) {
-      warn('لا يمكن حذف الجهاز الوحيد');
-      return;
-    }
-    devs.splice(idx, 1);
-    setDevices(devs);
-    let cur = getCurrentIdx();
-    if (cur >= devs.length) cur = devs.length - 1;
-    setCurrentIdx(cur);
-    renderDeviceList();
-    refreshDeviceUI();
-    showToast('تم حذف الجهاز');
-  }
-
-  /* ── UI Refresh ────────────────────── */
-  function refreshDeviceUI() {
-    const dev = currentDevice();
-    eid('device-display-name').textContent = dev.name || 'RTU5034 Gate';
-    eid('device-display-number').textContent = dev.number || '—';
-
-    // Auto-fill tel-sim
-    const telSim = eid('tel-sim');
-    if (telSim && !telSim._manuallyEdited) {
-      telSim.value = dev.number || '';
-    }
-  }
-
-  /* ── Gear button handler ──────────── */
-  // Settings gear opens settings modal (not setup wizard)
-  function showSetupWizard(isAdding) {
-    if (isAdding === undefined && getDevices().length > 0) {
-      // If devices exist, open settings instead
-    }
-    setupIsAdding = !!isAdding;
-    closeSettingsModal();
-    eid('setup-name').value = '';
-    eid('setup-number').value = '';
-    eid('setup-password').value = '1234';
-    eid('setup-skip').style.display = (isAdding || getDevices().length > 0) ? 'block' : 'none';
-    eid('setup-wizard').classList.add('open');
-  }
-
-  // Override gear button to show settings when devices exist
-  document.querySelector('[title="الإعدادات"]').onclick = function() {
-    if (getDevices().length > 0) {
-      showSettingsModal();
-    } else {
-      showSetupWizard();
-    }
-  };
-
-  /* ── Migrate old localStorage data ── */
-  (function migrateOldData() {
-    const oldNum  = localStorage.getItem('rtu5034_deviceNumber');
-    const oldPwd  = localStorage.getItem('rtu5034_password');
-    if (oldNum && getDevices().length === 0) {
-      setDevices([{ name: 'RTU5034 Gate', number: oldNum, password: oldPwd || '1234' }]);
-      setCurrentIdx(0);
-      localStorage.removeItem('rtu5034_deviceNumber');
-      localStorage.removeItem('rtu5034_password');
-    }
-  })();
-
-  /* ── Init ──────────────────────────── */
-  refreshDeviceUI();
-
-  // Show setup wizard on first launch
-  if (getDevices().length === 0) {
-    showSetupWizard();
-  }
-
-  /* ── PWA Service Worker ────────────── */
+  /* ── PWA Service Worker ──────────── */
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
